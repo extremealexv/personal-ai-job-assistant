@@ -34,7 +34,8 @@ This project consists of three main components:
 
 ## 📚 Documentation
 
-- [Functional Requirements](./REQUIREMENTS.md) - Detailed system specifications
+- **[Functional Requirements](./FUNCTIONAL_REQUIREMENTS.md)** - Detailed system specifications (FR-1 through FR-18)
+- **[Non-Functional Requirements](./NON_FUNCTIONAL_REQUIREMENTS.md)** - Performance, security, and quality requirements
 - [Architecture Documentation](./docs/architecture/) - System design and diagrams
 - [API Documentation](./docs/api/) - API endpoints and integration guides
 - [Contributing Guidelines](./CONTRIBUTING.md) - How to contribute to the project

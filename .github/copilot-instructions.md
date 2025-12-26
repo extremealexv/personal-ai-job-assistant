@@ -60,17 +60,53 @@ Currently in **Phase 1 (Foundation)**:
 - Implementing authentication system
 - Building resume parser
 
-### Tech Stack
-- **Backend**: Python ≥3.11 (framework TBD), PostgreSQL ≥15
-- **Frontend**: Node.js ≥18.x (framework TBD)
-- **Extension**: Chrome/Edge Manifest V3
+### Tech Stack (Finalized)
 
-### Running Locally (per README)
+**Backend:**
+- **Framework**: FastAPI (Python 3.11+) with async/await
+- **ORM**: SQLAlchemy 2.0 with Alembic migrations
+- **Database**: PostgreSQL 15+ (with pgcrypto, pg_trgm extensions)
+- **Task Queue**: Celery + Redis
+- **Auth**: FastAPI-Users (bcrypt/argon2, optional WebAuthn)
+
+**Frontend:**
+- **Framework**: React 18+ with TypeScript
+- **Build Tool**: Vite
+- **UI**: Tailwind CSS + shadcn/ui (accessible components)
+- **State**: TanStack Query (React Query) + Zustand
+- **Forms**: React Hook Form + Zod validation
+
+**Browser Extension:**
+- **Manifest**: V3
+- **Core**: Vanilla TypeScript (content scripts)
+- **Popup**: Optional React
+- **Strategy Pattern**: ATSStrategy interface for platform extensibility
+
+**AI Integration:**
+- **Primary**: OpenAI API (GPT-4)
+- **Abstraction**: AIProvider interface for model flexibility
+- **Fallback**: GPT-3.5-turbo or future Anthropic Claude
+
+**Testing:**
+- **Backend**: pytest + pytest-asyncio, httpx, faker, factory-boy
+- **Frontend**: Vitest + Testing Library + MSW
+- **Extension**: Jest + Puppeteer
+- **Coverage**: 80% minimum, enforced in CI/CD
+
+**Code Quality:**
+- **Python**: Black (formatter), Ruff (linter), mypy (types), Bandit (security)
+- **TypeScript**: Prettier (formatter), ESLint (Airbnb config), tsc --strict
+- **Git Hooks**: pre-commit with all formatters/linters
+
+### Running Locally
+
 ```bash
 # Backend
 cd src/backend
-pip install -r requirements.txt
-python manage.py runserver
+poetry install
+poetry shell
+alembic upgrade head  # Run migrations
+uvicorn app.main:app --reload
 
 # Frontend
 cd src/frontend
@@ -79,25 +115,126 @@ npm run dev
 
 # Extension
 # Load unpacked from src/extension in chrome://extensions
+
+# Run tests
+cd src/backend && pytest
+cd src/frontend && npm test
+cd src/extension && npm test
 ```
 
 ## Key Patterns & Conventions
 
+### Database Schema
+Full schema in [docs/architecture/DATABASE_SCHEMA.md](../docs/architecture/DATABASE_SCHEMA.md):
+- **15 core tables**: users, master_resumes, work_experiences, education, skills, certifications, job_postings, resume_versions, prompt_templates, applications, cover_letters, credentials, email_threads, interview_events, analytics_snapshots
+- **UUID primary keys** throughout
+- **Soft deletes** via `deleted_at` timestamp
+- **JSONB columns** for flexible data (resume diffs, demographics, AI metadata)
+- **Triggers**: Auto-update `updated_at`, increment usage stats, cascade job status updates
+- **Indexes**: Full-text search on job descriptions, composite indexes for common queries
+- **Encryption**: pgcrypto extension for credentials, stored as BYTEA
+
 ### Prompt Management (FR-7)
-- Prompts are **versioned editable entities** stored in the database
-- Scoped by task (resume, cover letter, form answers) and role type
+- Prompts are **versioned editable entities** stored in `prompt_templates` table
+- Scoped by task (`resume_tailor`, `cover_letter`, `form_answers`) and role type
 - Support per-job overrides of default prompts
+- Track usage stats (`times_used`, `avg_satisfaction_score`)
 
 ### Credential Handling (FR-10)
-- Job board credentials: encrypted at rest, accessible only to browser extension
-- **Critical**: Credentials NEVER exposed to AI components
+- Job board credentials: encrypted at rest using pgcrypto or application-level encryption (Fernet)
+- Stored in `credentials` table with `password_encrypted` BYTEA column
+**Workflow**: Manual test → Create issue (`tested:manual` label) → Write automated test → PR with test → Add to regression suite
 
-### ATS Platform Support (FR-18.1)
-- Design for extensibility: add new ATS platforms without core rewrites
-- Use strategy/adapter pattern for platform-specific logic
+**Backend Testing** (pytest):
+- `tests/unit/` - Fast, isolated tests (no DB/API calls)
+- `tests/integration/` - API endpoint tests with test DB
+- `tests/e2e/` - Full workflow tests
+- Fixtures in `tests/conftest.py` (test DB session, auth headers, factories)
+- **Target**: 80% coverage minimum (enforced in CI/CD)
+
+**Frontend Testing** (Vitest + Testing Library):
+- Co-located tests: `src/components/__tests__/ComponentName.test.tsx`
+- Use `render()`, `screen`, `userEvent` from Testing Library
+- Mock API calls with MSW (Mock Service Worker)
+- Test hooks with `renderHook()`
+- **Target**: 80% coverage minimum
+
+**Extension Testing** (Jest + Puppeteer):
+- Unit tests for ATS detection logic
+- E2E tests for autofill on real ATS platforms
+- Mock Chrome APIs with sinon
+
+**Test Commands**:
+```bash
+# Backend
+pytest -m unit              # Fast unit tests
+pytest -m integration       # API tests
+pytest --cov               # With coverage
+
+# Frontend
+npm test                   # All tests
+npm test -- --watch        # Watch mode
+npm test -- --coverage     # With coverage
+
+# Extension
+npm test
+npm run test:e2e          # E2E tests
+```
+
+**GitHub Integration**:
+- Use labels: `tested:manual`, `needs-test`, `test:unit`, `test:integration`, `test:e2e`
+- Allde Style & Conventions
+
+**Python** (Black, Ruff, mypy):
+- Line length: 100 characters
+- Use type hints (mypy --strict)
+- Google-style docstrings
+- Run: `black .`, `ruff . --fix`, `mypy app/`
+
+**TypeScript** (Prettier, ESLint):
+- Airbnb style guide + TypeScript rules
+- Interfaces prefixed with `I`: `IResume`, `IUser`
+- Organize imports (builtin → external → internal → parent → sibling)
+- Run: `npm run lint:fix`, `npm run format`, `npm run type-check`
+
+**Git Commits** (Conventional Commits):
+```
+feat(resume): add PDF parsing support
+fix(auth): prevent session timeout during active use
+test(backend): add unit tests for resume parser
+docs(api): update resume API endpoint documentation
+```
+
+**Pre-commit Hooks**:
+Install with `pre-commit install` - automatically runs formatters/linters before commit
+
+Full details in [docs/architecture/CODE_STYLE.md](../docs/architecture/CODE_STYLE.md)
+
+## Contributing
+
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for full guidelines. Key points:
+- Fork from `main` branch
+- Follow code style standards (Black/Prettier + ESLint/Ruff)
+- Add tests for changes (80% coverage required)
+- Update documentation
+- Use Conventional Commits format
+    autofill(data: ApplicationData): Promise<void>;
+    submit?(): Promise<void>;
+  }
+  ```
+- Implement per-platform: `WorkdayStrategy`, `GreenhouseStrategy`, `LeverStrategy`
+- Design for extensibility: add new platforms without core rewrites
 
 ### AI Model Flexibility (FR-18.2)
-- Abstract AI model interface to allow swapping providers (OpenAI, Anthropic, etc.)
+- Use **Abstract Provider Pattern**:
+  ```python
+  class AIProvider(ABC):
+      @abstractmethod
+      async def tailor_resume(...) -> TailoredResume: ...
+      @abstractmethod
+      async def generate_cover_letter(...) -> str: ...
+  ```
+- Implementations: `OpenAIProvider`, `AnthropicProvider` (future)
 - Business logic must be model-agnostic
 
 ## Testing & Quality

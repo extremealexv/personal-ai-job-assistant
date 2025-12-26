@@ -1,46 +1,25 @@
-# Environment variables
-.env
-.env.local
-.env.*.local
-*.env
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-venv/
-ENV/
-env/
-.venv
-
-# Node
+# Node.js
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+package-lock.json
 .pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
 dist/
 build/
+out/
 *.log
 
-# IDE
+# IDE and Editor files
 .vscode/
 .idea/
 *.swp
@@ -48,37 +27,28 @@ build/
 *~
 .DS_Store
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Sensitive data
-credentials.json
-token.json
-*.key
-*.pem
-*.p12
-
-# Test coverage
-.coverage
-htmlcov/
-.pytest_cache/
+# Testing
 coverage/
-
-# OS
-Thumbs.db
-.DS_Store
-
-# Logs
-logs/
-*.log
+.nyc_output/
 
 # Temporary files
-tmp/
-temp/
 *.tmp
+.tmp/
+temp/
 
-# Browser extension (built files)
-src/extension/dist/
-src/extension/build/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Database
+*.sqlite
+*.db
+
+# OS files
+Thumbs.db

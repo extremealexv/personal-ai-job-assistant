@@ -158,14 +158,18 @@ echo "Step 6: Installing Frontend Dependencies"
 echo "--------------------------------------------------"
 cd src/frontend
 
-print_info "Installing Node.js dependencies with pnpm..."
-pnpm install
-
-if [ $? -eq 0 ]; then
-    print_status "Frontend dependencies installed successfully"
+if [ -f "package.json" ]; then
+    print_info "Installing Node.js dependencies with pnpm..."
+    pnpm install
+    
+    if [ $? -eq 0 ]; then
+        print_status "Frontend dependencies installed successfully"
+    else
+        print_error "Frontend dependency installation failed"
+        exit 1
+    fi
 else
-    print_error "Frontend dependency installation failed"
-    exit 1
+    print_info "No package.json found - frontend not set up yet (skipping)"
 fi
 
 cd ../..
@@ -175,14 +179,18 @@ echo "Step 7: Installing Browser Extension Dependencies"
 echo "--------------------------------------------------"
 cd src/extension
 
-print_info "Installing extension dependencies with npm..."
-npm install
-
-if [ $? -eq 0 ]; then
-    print_status "Extension dependencies installed successfully"
+if [ -f "package.json" ]; then
+    print_info "Installing extension dependencies with npm..."
+    npm install
+    
+    if [ $? -eq 0 ]; then
+        print_status "Extension dependencies installed successfully"
+    else
+        print_error "Extension dependency installation failed"
+        exit 1
+    fi
 else
-    print_error "Extension dependency installation failed"
-    exit 1
+    print_info "No package.json found - extension not set up yet (skipping)"
 fi
 
 cd ../..

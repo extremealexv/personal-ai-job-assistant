@@ -12,18 +12,42 @@ Usage:
 
 import argparse
 import asyncio
+import os
 import sys
 from pathlib import Path
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
-
-# Database configuration
-DATABASE_URL = "postgresql+asyncpg://postgres:password@localhost:5432/ai_job_assistant"
+# Try to load from environment first, fall back to default
+DATABASE_URL = os.getenv(
+    "DATABASE_ASYNC_URL",
+    "postgresql+asyncpg://postgres:password@localhost:5432/ai_job_assistant"
+)
 
 # Path to schema SQL file
 SCHEMA_FILE = Path(__file__).parent / "schema.sql"
+
+
+async def check_connection(engine=None):
+    """Test database connection."""
+    should_dispose = False
+    if engine is None:
+        engine = create_async_engine(DATABASE_URL, echo=False)
+        should_dispose = True
+    
+    try:
+        async with engine.begin() as conn:
+            result = await conn.execute(text("SELECT version();"))
+            version = result.scalar()
+            print(f"✅ Database connected: {version}")
+            return True
+    except Exception as e:
+        print(f"❌ Database connection failed: {e}")
+        return False
+    finally:
+        if should_dispose:
+            await engine.dispose()
 
 
 async def drop_schema(engine):

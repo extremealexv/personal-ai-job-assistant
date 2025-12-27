@@ -63,22 +63,26 @@ else
     ERRORS=$((ERRORS + 1))
 fi
 
-# Check frontend dependencies  
-if [ -d "src/frontend/node_modules" ]; then
-    echo "✓ Frontend dependencies installed"
+# Check frontend dependencies (optional - not set up yet)
+if [ -f "src/frontend/package.json" ]; then
+    if [ -d "src/frontend/node_modules" ]; then
+        echo "✓ Frontend dependencies installed"
+    else
+        echo "⚠ Frontend dependencies missing - run: cd src/frontend && pnpm install"
+        echo "  (Optional: frontend not set up yet)"
+    fi
 else
-    echo "✗ Frontend dependencies missing - run: cd src/frontend && pnpm install"
-    ERRORS=$((ERRORS + 1))
+    echo "⚠ Frontend not set up yet (optional)"
 fi
 
 echo ""
 echo "======================="
 if [ $ERRORS -eq 0 ]; then
-    echo "✓ All checks passed!"
+    echo "✓ All critical checks passed!"
     echo "Ready to start development"
     exit 0
 else
-    echo "✗ $ERRORS checks failed"
+    echo "✗ $ERRORS critical checks failed"
     echo "See scripts/INSTALLATION_ORDER.md for setup steps"
     exit 1
 fi

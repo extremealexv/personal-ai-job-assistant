@@ -25,9 +25,10 @@ repos:
       - id: mypy
         args: [--strict, --ignore-missing-imports]
         additional_dependencies: 
-          - types-all
-          - pydantic
-          - sqlalchemy
+          - pydantic>=2.5.0
+          - sqlalchemy>=2.0.0
+          - types-redis
+          - types-passlib
         files: ^src/backend/app/
         exclude: ^src/backend/tests/
 

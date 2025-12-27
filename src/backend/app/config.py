@@ -1,6 +1,6 @@
 """Application configuration using Pydantic Settings."""
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -81,28 +81,41 @@ class Settings(BaseSettings):
     )
 
     # Session Configuration
-    session_timeout_hours: int = Field(default=24, description="Session timeout in hours")
+    session_timeout_hours: int = Field(
+        default=24, description="Session timeout in hours"
+    )
     session_cookie_secure: bool = Field(
-        default=False, description="Use secure cookies (HTTPS only in production)"
+        default=False,
+        description="Use secure cookies (HTTPS only in production)",
     )
 
     # File Upload Configuration
-    max_upload_size_mb: int = Field(default=10, description="Maximum file upload size in MB")
-    upload_dir: Path = Field(default=Path("./uploads"), description="Directory for uploaded files")
+    max_upload_size_mb: int = Field(
+        default=10, description="Maximum file upload size in MB"
+    )
+    upload_dir: Path = Field(
+        default=Path("./uploads"), description="Directory for uploaded files"
+    )
 
     # Rate Limiting
-    rate_limit_per_minute: int = Field(default=60, description="API rate limit per minute")
+    rate_limit_per_minute: int = Field(
+        default=60, description="API rate limit per minute"
+    )
 
     @property
     def cors_origins_list(self) -> list[str]:
         """Get CORS origins as a list."""
         if isinstance(self.cors_origins, str):
-            return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
-        return self.cors_origins
+            return [
+                origin.strip()
+                for origin in self.cors_origins.split(",")
+                if origin.strip()
+            ]
+        return [self.cors_origins]
 
     @field_validator("upload_dir", mode="before")
     @classmethod
-    def parse_upload_dir(cls, v):
+    def parse_upload_dir(cls, v: Any) -> Path:
         """Convert upload directory to Path object."""
         if isinstance(v, str):
             return Path(v)
@@ -130,17 +143,20 @@ def load_settings() -> Settings:
         return Settings()
     except Exception as e:
         if "validation error" in str(e).lower():
-            print(f"\n❌ Configuration Error: Missing required environment variables")
-            print(f"\n📍 Looking for .env file at: {ENV_FILE}")
+            print("\nConfiguration Error: Missing required environment variables")
+            print(f"\nLooking for .env file at: {ENV_FILE}")
             print(f"   File exists: {ENV_FILE.exists()}")
-            
+
             if not ENV_FILE.exists():
-                print(f"\n💡 Quick fix:")
-                print(f"   1. Copy the template: cp .env.example .env")
-                print(f"   2. Run setup script: cd src/backend && python scripts/setup_env.ps1")
-                print(f"   3. Edit .env with your credentials")
+                print("\nQuick fix:")
+                print("   1. Copy the template: cp .env.example .env")
+                print(
+                    "   2. Run setup script: "
+                    "cd src/backend && python scripts/setup_env.ps1"
+                )
+                print("   3. Edit .env with your credentials")
             else:
-                print(f"\n💡 The .env file exists but is missing required values.")
+                print("\nThe .env file exists but is missing required values.")
                 print(f"   Check that these variables are set:")
                 print(f"   - DATABASE_URL")
                 print(f"   - DATABASE_ASYNC_URL")

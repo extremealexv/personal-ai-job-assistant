@@ -6,11 +6,21 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+# Find project root (where .env should be)
+def get_project_root() -> Path:
+    """Get the project root directory (2 levels up from this file)."""
+    return Path(__file__).parent.parent.parent
+
+
+# Path to .env file in project root
+ENV_FILE = get_project_root() / ".env"
+
+
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(ENV_FILE),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -106,8 +116,36 @@ class Settings(BaseSettings):
         self.upload_dir.mkdir(parents=True, exist_ok=True)
 
 
+# Helper function to initialize settings with better error messages
+def load_settings() -> Settings:
+    """Load settings with helpful error messages."""
+    try:
+        return Settings()
+    except Exception as e:
+        if "validation error" in str(e).lower():
+            print(f"\n❌ Configuration Error: Missing required environment variables")
+            print(f"\n📍 Looking for .env file at: {ENV_FILE}")
+            print(f"   File exists: {ENV_FILE.exists()}")
+            
+            if not ENV_FILE.exists():
+                print(f"\n💡 Quick fix:")
+                print(f"   1. Copy the template: cp .env.example .env")
+                print(f"   2. Run setup script: cd src/backend && python scripts/setup_env.ps1")
+                print(f"   3. Edit .env with your credentials")
+            else:
+                print(f"\n💡 The .env file exists but is missing required values.")
+                print(f"   Check that these variables are set:")
+                print(f"   - DATABASE_URL")
+                print(f"   - DATABASE_ASYNC_URL")
+                print(f"   - SECRET_KEY")
+                print(f"   - ENCRYPTION_KEY")
+                print(f"   - OPENAI_API_KEY")
+            print()
+        raise
+
+
 # Global settings instance
-settings = Settings()
+settings = load_settings()
 
 # Create upload directory on startup
 settings.create_upload_dir()

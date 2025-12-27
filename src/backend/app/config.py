@@ -8,8 +8,16 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Find project root (where .env should be)
 def get_project_root() -> Path:
-    """Get the project root directory (2 levels up from this file)."""
-    return Path(__file__).parent.parent.parent
+    """Get the project root directory (3 levels up from this file).
+    
+    Path structure:
+    - This file: src/backend/app/config.py
+    - Parent: src/backend/app/
+    - Parent.parent: src/backend/
+    - Parent.parent.parent: src/
+    - Parent.parent.parent.parent: project root
+    """
+    return Path(__file__).parent.parent.parent.parent
 
 
 # Path to .env file in project root

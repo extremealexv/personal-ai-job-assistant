@@ -137,19 +137,18 @@ async def create_schema(engine):
     
     schema_sql = SCHEMA_FILE.read_text()
     
-    async with engine.begin() as conn:
-        # Split by statement (rough approach, works for most SQL)
-        statements = [s.strip() for s in schema_sql.split(";") if s.strip()]
+    # Execute using raw asyncpg connection to handle multi-statement SQL
+    async with engine.connect() as conn:
+        # Get the raw asyncpg connection
+        raw_conn = await conn.get_raw_connection()
         
-        for i, statement in enumerate(statements, 1):
-            if statement:
-                try:
-                    await conn.execute(text(statement))
-                except Exception as e:
-                    print(f"⚠️  Warning executing statement {i}: {e}")
-                    # Continue with other statements
-    
-    print("✅ Schema created successfully")
+        try:
+            # Execute the entire SQL file - asyncpg's execute() handles multiple statements
+            await raw_conn.driver_connection.execute(schema_sql)
+            print("✅ Schema created successfully")
+        except Exception as e:
+            print(f"❌ Error creating schema: {e}")
+            raise
 
 
 async def seed_data(engine):

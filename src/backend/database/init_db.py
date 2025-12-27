@@ -77,43 +77,52 @@ async def drop_schema(engine):
     """Drop all tables and types."""
     print("🗑️  Dropping existing schema...")
     
+    # List of tables to drop (in reverse dependency order)
+    tables = [
+        "analytics_snapshots",
+        "interview_events",
+        "email_threads",
+        "credentials",
+        "cover_letters",
+        "applications",
+        "resume_versions",
+        "prompt_templates",
+        "job_postings",
+        "certifications",
+        "skills",
+        "education",
+        "work_experiences",
+        "master_resumes",
+        "users",
+    ]
+    
+    # List of types to drop
+    types = [
+        "interview_type",
+        "email_classification",
+        "prompt_task",
+        "application_status",
+        "job_source",
+        "job_status",
+        "skill_category",
+        "degree_type",
+        "experience_type",
+    ]
+    
     async with engine.begin() as conn:
-        # Drop tables
-        await conn.execute(text("""
-            DROP TABLE IF EXISTS analytics_snapshots CASCADE;
-            DROP TABLE IF EXISTS interview_events CASCADE;
-            DROP TABLE IF EXISTS email_threads CASCADE;
-            DROP TABLE IF EXISTS credentials CASCADE;
-            DROP TABLE IF EXISTS cover_letters CASCADE;
-            DROP TABLE IF EXISTS applications CASCADE;
-            DROP TABLE IF EXISTS resume_versions CASCADE;
-            DROP TABLE IF EXISTS prompt_templates CASCADE;
-            DROP TABLE IF EXISTS job_postings CASCADE;
-            DROP TABLE IF EXISTS certifications CASCADE;
-            DROP TABLE IF EXISTS skills CASCADE;
-            DROP TABLE IF EXISTS education CASCADE;
-            DROP TABLE IF EXISTS work_experiences CASCADE;
-            DROP TABLE IF EXISTS master_resumes CASCADE;
-            DROP TABLE IF EXISTS users CASCADE;
-        """))
+        # Drop tables one by one
+        for table in tables:
+            try:
+                await conn.execute(text(f"DROP TABLE IF EXISTS {table} CASCADE"))
+            except Exception as e:
+                print(f"⚠️  Warning dropping table {table}: {e}")
         
-        # Drop types
-        await conn.execute(text("""
-            DROP TYPE IF EXISTS interview_type CASCADE;
-            DROP TYPE IF EXISTS email_classification CASCADE;
-            DROP TYPE IF EXISTS prompt_task CASCADE;
-            DROP TYPE IF EXISTS application_status CASCADE;
-            DROP TYPE IF EXISTS job_source CASCADE;
-            DROP TYPE IF EXISTS job_status CASCADE;
-            DROP TYPE IF EXISTS skill_category CASCADE;
-            DROP TYPE IF EXISTS degree_type CASCADE;
-            DROP TYPE IF EXISTS experience_type CASCADE;
-        """))
-        
-        # Drop extensions (optional, comment out if shared with other DBs)
-        # await conn.execute(text("DROP EXTENSION IF EXISTS pg_trgm CASCADE;"))
-        # await conn.execute(text("DROP EXTENSION IF EXISTS pgcrypto CASCADE;"))
-        # await conn.execute(text("DROP EXTENSION IF EXISTS \"uuid-ossp\" CASCADE;"))
+        # Drop types one by one
+        for type_name in types:
+            try:
+                await conn.execute(text(f"DROP TYPE IF EXISTS {type_name} CASCADE"))
+            except Exception as e:
+                print(f"⚠️  Warning dropping type {type_name}: {e}")
     
     print("✅ Schema dropped successfully")
 

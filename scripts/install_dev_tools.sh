@@ -83,13 +83,19 @@ if command -v pre-commit &> /dev/null; then
     print_status "pre-commit is already installed: $(pre-commit --version)"
 else
     print_info "Installing pre-commit via pip..."
-    python3 -m pip install --user pre-commit
+    # Check if we're in a virtualenv
+    if [ -n "$VIRTUAL_ENV" ]; then
+        print_info "Detected virtualenv, installing without --user flag"
+        python3 -m pip install pre-commit
+    else
+        python3 -m pip install --user pre-commit
+    fi
     
     if command -v pre-commit &> /dev/null; then
         print_status "pre-commit installed successfully: $(pre-commit --version)"
     else
         print_error "pre-commit installation failed"
-        print_info "Try manually: python3 -m pip install --user pre-commit"
+        print_info "Try manually: python3 -m pip install pre-commit"
         exit 1
     fi
 fi

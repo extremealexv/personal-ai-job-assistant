@@ -43,7 +43,7 @@ for i, line in enumerate(lines):
     if 'User created with hashed password' in line and len(line) > 100:
         indent = len(line) - len(line.lstrip())
         lines[i] = ' ' * indent + 'print('
-        lines.insert(i+1, ' ' * (indent+4) + 'f"✓ User created with hashed password: "'
+        lines.insert(i+1, ' ' * (indent+4) + 'f"✓ User created with hashed password: "')
         lines.insert(i+2, ' ' * (indent+4) + 'f"{example[\'email\']}"')
         lines.insert(i+3, ' ' * indent + ')')
         print(f"✓ Fixed init_db.py line {i+1}")

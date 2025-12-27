@@ -16,14 +16,32 @@ import os
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
+
+# Load environment variables from .env file in project root
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+ENV_FILE = PROJECT_ROOT / ".env"
+
+if ENV_FILE.exists():
+    load_dotenv(ENV_FILE)
+    print(f"📍 Loaded environment from: {ENV_FILE}")
+else:
+    print(f"⚠️  No .env file found at: {ENV_FILE}")
+    print("   Using environment variables or defaults")
 
 # Try to load from environment first, fall back to default
 DATABASE_URL = os.getenv(
     "DATABASE_ASYNC_URL",
     "postgresql+asyncpg://postgres:password@localhost:5432/ai_job_assistant"
 )
+
+# Show which database we're connecting to (without password)
+if "@" in DATABASE_URL:
+    db_info = DATABASE_URL.split("@")[1]
+    user_info = DATABASE_URL.split("//")[1].split("@")[0].split(":")[0]
+    print(f"🔌 Connecting as user: {user_info} to {db_info}")
 
 # Path to schema SQL file
 SCHEMA_FILE = Path(__file__).parent / "schema.sql"

@@ -75,9 +75,9 @@ class Settings(BaseSettings):
     )
 
     # CORS Configuration
-    cors_origins: list[str] = Field(
-        default=["http://localhost:5173", "http://localhost:3000"],
-        description="Allowed CORS origins",
+    cors_origins: str = Field(
+        default="http://localhost:5173,http://localhost:3000",
+        description="Allowed CORS origins (comma-separated)",
     )
 
     # Session Configuration
@@ -93,13 +93,12 @@ class Settings(BaseSettings):
     # Rate Limiting
     rate_limit_per_minute: int = Field(default=60, description="API rate limit per minute")
 
-    @field_validator("cors_origins", mode="before")
-    @classmethod
-    def parse_cors_origins(cls, v):
-        """Parse CORS origins from comma-separated string."""
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
-        return v
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Get CORS origins as a list."""
+        if isinstance(self.cors_origins, str):
+            return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        return self.cors_origins
 
     @field_validator("upload_dir", mode="before")
     @classmethod

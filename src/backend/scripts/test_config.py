@@ -50,28 +50,37 @@ def test_config_loading():
 
 def test_required_variables(settings):
     """Check if all required variables are set."""
-    required = [
-        "database_url",
-        "database_async_url",
-        "secret_key",
-        "encryption_key",
-        "openai_api_key",
-    ]
+    required = {
+        "database_url": "postgresql://...",
+        "database_async_url": "postgresql+asyncpg://...",
+        "secret_key": "32+ character string",
+        "encryption_key": "Fernet key",
+        "openai_api_key": "sk-...",
+    }
     
-    missing = []
-    for var in required:
+    issues = []
+    for var, example in required.items():
         value = getattr(settings, var, None)
-        if not value or "your-" in value or "generate-" in value:
-            missing.append(var.upper())
+        if not value:
+            issues.append(f"  ❌ {var.upper()}: not set")
+        elif any(placeholder in str(value) for placeholder in ["your-", "generate-", "your_password", "your_key"]):
+            issues.append(f"  ⚠️  {var.upper()}: still has placeholder value")
     
-    if missing:
-        print(f"❌ Missing or placeholder values: {', '.join(missing)}")
-        print("\nGenerate keys with:")
-        print('  python -c "import secrets; print(secrets.token_urlsafe(32))"')
-        print('  python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"')
+    if issues:
+        print("❌ Configuration issues found:")
+        for issue in issues:
+            print(issue)
+        print("\n💡 To fix:")
+        print("  1. Edit your .env file:")
+        env_file = Path(__file__).parent.parent.parent.parent / ".env"
+        print(f"     nano {env_file}")
+        print("\n  2. Generate required keys:")
+        print('     SECRET_KEY:     python -c "import secrets; print(secrets.token_urlsafe(32))"')
+        print('     ENCRYPTION_KEY: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"')
+        print("\n  3. Get OpenAI API key from: https://platform.openai.com/api-keys")
         return False
     
-    print("✅ All required variables are set")
+    print("✅ All required variables are properly configured")
     return True
 
 
@@ -132,6 +141,7 @@ def main():
         print(f"   Database: {settings.database_url.split('@')[1] if '@' in settings.database_url else 'configured'}")
         print(f"   Redis: {settings.redis_url}")
         print(f"   AI Model: {settings.openai_model}")
+        print(f"   CORS Origins: {settings.cors_origins_list}")
         print(f"   Upload Dir: {settings.upload_dir}")
         print()
     

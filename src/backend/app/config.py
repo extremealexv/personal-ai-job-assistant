@@ -142,7 +142,7 @@ class Settings(BaseSettings):
 def load_settings() -> Settings:
     """Load settings with helpful error messages."""
     try:
-        return Settings()  # type: ignore[call-arg]
+        return Settings()
     except Exception as e:
         if "validation error" in str(e).lower():
             print("\nConfiguration Error: Missing required environment variables")

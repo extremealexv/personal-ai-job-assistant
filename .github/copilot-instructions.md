@@ -2,11 +2,87 @@
 
 ## Project Overview
 This is a **single-user** AI-powered job application management system with three main components:
-- **Backend API** (Python) - Core business logic, AI integration, data persistence
-- **Web Frontend** (Node.js) - Desktop interface for job/application management  
+- **Backend API** (Python/FastAPI) - Core business logic, AI integration, data persistence
+- **Web Frontend** (React/TypeScript) - Desktop interface for job/application management  
 - **Browser Extension** (Chrome/Edge) - ATS integration for autofill and submission
 
 **Important**: This is NOT a multi-tenant SaaS. All features serve one user managing their personal job search.
+
+**Current Status**: Phase 1 (Foundation) - Backend skeleton with database schema defined, authentication pending implementation.
+
+## Quick Start Commands
+
+### Initial Setup (First Time)
+```bash
+# Backend setup
+cd src/backend
+poetry install
+poetry shell
+
+# Initialize database (drops existing if --drop flag used)
+python database/init_db.py --drop --seed
+
+# Run migrations (when schema changes)
+alembic upgrade head
+
+# Start server
+uvicorn app.main:app --reload --port 8000
+```
+
+### Frontend
+```bash
+cd src/frontend
+npm install
+npm run dev  # Starts on http://localhost:5173
+```
+
+### Extension Development
+```bash
+cd src/extension
+npm install
+npm run build
+
+# Load in browser:
+# 1. chrome://extensions (enable Developer Mode)
+# 2. "Load unpacked" → select src/extension/dist
+```
+
+### Running Tests
+```bash
+# Backend tests
+cd src/backend
+pytest -m unit              # Fast unit tests only
+pytest -m integration       # API endpoint tests
+pytest --cov               # All tests with coverage report
+
+# Frontend tests
+cd src/frontend
+npm test                   # Run all tests
+npm test -- --watch        # Watch mode for TDD
+npm test -- --coverage     # Coverage report
+
+# Extension tests
+cd src/extension
+npm test
+```
+
+### Code Quality Checks
+```bash
+# Backend formatting and linting
+black .                    # Format Python code
+ruff . --fix              # Fix linting issues
+mypy app/                 # Type check
+
+# Frontend formatting and linting  
+npm run lint:fix          # Fix ESLint issues
+npm run format            # Format with Prettier
+npm run type-check        # TypeScript type checking
+
+# Run all checks (pre-commit simulation)
+pre-commit run --all-files
+```
+
+---
 
 ## Architecture & Components
 
@@ -122,6 +198,40 @@ cd src/frontend && npm test
 cd src/extension && npm test
 ```
 
+---
+
+## File Structure Quick Reference
+
+```
+personal-ai-job-assistant/
+├── .github/
+│   └── copilot-instructions.md     # This file
+├── docs/
+│   ├── architecture/
+│   │   ├── DATABASE_SCHEMA.md      # 15 tables, full schema with examples
+│   │   ├── TECH_STACK.md           # Technology choices with rationale
+│   │   ├── CODE_STYLE.md           # Formatting/linting standards
+│   │   └── TESTING_STRATEGY.md     # Test patterns and coverage requirements
+│   ├── api/                        # API documentation (TBD)
+│   └── deployment/                 # Deployment guides (TBD)
+├── src/
+│   ├── backend/
+│   │   ├── app/                    # FastAPI application (TBD)
+│   │   └── database/
+│   │       ├── schema.sql          # Complete PostgreSQL schema
+│   │       └── init_db.py          # Database initialization script
+│   ├── frontend/                   # React application (TBD)
+│   ├── extension/                  # Browser extension (TBD)
+│   └── shared/                     # Shared types/utilities (TBD)
+├── tests/                          # Test files (organized by component)
+├── FUNCTIONAL_REQUIREMENTS.md      # FR-1 through FR-18 specifications
+├── NON_FUNCTIONAL_REQUIREMENTS.md  # Performance, security, compliance
+├── CONTRIBUTING.md                 # Contribution guidelines
+└── README.md                       # Project overview
+```
+
+---
+
 ## Key Patterns & Conventions
 
 ### Database Schema
@@ -143,6 +253,37 @@ Full schema in [docs/architecture/DATABASE_SCHEMA.md](../docs/architecture/DATAB
 ### Credential Handling (FR-10)
 - Job board credentials: encrypted at rest using pgcrypto or application-level encryption (Fernet)
 - Stored in `credentials` table with `password_encrypted` BYTEA column
+- Never expose to AI components or logs
+
+### Browser Extension Architecture (FR-9, FR-18.1)
+- Use **Strategy Pattern** for ATS platform support:
+  ```typescript
+  interface ATSStrategy {
+    detect(): boolean;
+    autofill(data: ApplicationData): Promise<void>;
+    submit?(): Promise<void>;
+  }
+  ```
+- Implement per-platform: `WorkdayStrategy`, `GreenhouseStrategy`, `LeverStrategy`
+- Design for extensibility: add new platforms without core rewrites
+
+### AI Model Flexibility (FR-18.2)
+- Use **Abstract Provider Pattern**:
+  ```python
+  class AIProvider(ABC):
+      @abstractmethod
+      async def tailor_resume(...) -> TailoredResume: ...
+      @abstractmethod
+      async def generate_cover_letter(...) -> str: ...
+  ```
+- Implementations: `OpenAIProvider`, `AnthropicProvider` (future)
+- Business logic must be model-agnostic
+
+---
+
+## Testing & Quality
+
+### Testing Strategy
 **Workflow**: Manual test → Create issue (`tested:manual` label) → Write automated test → PR with test → Add to regression suite
 
 **Backend Testing** (pytest):
@@ -164,26 +305,7 @@ Full schema in [docs/architecture/DATABASE_SCHEMA.md](../docs/architecture/DATAB
 - E2E tests for autofill on real ATS platforms
 - Mock Chrome APIs with sinon
 
-**Test Commands**:
-```bash
-# Backend
-pytest -m unit              # Fast unit tests
-pytest -m integration       # API tests
-pytest --cov               # With coverage
-
-# Frontend
-npm test                   # All tests
-npm test -- --watch        # Watch mode
-npm test -- --coverage     # With coverage
-
-# Extension
-npm test
-npm run test:e2e          # E2E tests
-```
-
-**GitHub Integration**:
-- Use labels: `tested:manual`, `needs-test`, `test:unit`, `test:integration`, `test:e2e`
-- Allde Style & Conventions
+### Code Style & Conventions
 
 **Python** (Black, Ruff, mypy):
 - Line length: 100 characters
@@ -210,6 +332,8 @@ Install with `pre-commit install` - automatically runs formatters/linters before
 
 Full details in [docs/architecture/CODE_STYLE.md](../docs/architecture/CODE_STYLE.md)
 
+---
+
 ## Contributing
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for full guidelines. Key points:
@@ -217,29 +341,6 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for full guidelines. Key points:
 - Follow code style standards (Black/Prettier + ESLint/Ruff)
 - Add tests for changes (80% coverage required)
 - Update documentation
-- Use Conventional Commits format
-    autofill(data: ApplicationData): Promise<void>;
-    submit?(): Promise<void>;
-  }
-  ```
-- Implement per-platform: `WorkdayStrategy`, `GreenhouseStrategy`, `LeverStrategy`
-- Design for extensibility: add new platforms without core rewrites
-
-### AI Model Flexibility (FR-18.2)
-- Use **Abstract Provider Pattern**:
-  ```python
-  class AIProvider(ABC):
-      @abstractmethod
-      async def tailor_resume(...) -> TailoredResume: ...
-      @abstractmethod
-      async def generate_cover_letter(...) -> str: ...
-  ```
-- Implementations: `OpenAIProvider`, `AnthropicProvider` (future)
-- Business logic must be model-agnostic
-
-## Testing & Quality
-
-- Add tests for new features (reference `tests/` directory structure when implemented)
 - Maintain diff tracking for resume versions (FR-3.4)
 - Log all system actions except sensitive content (FR-16.3)
 
@@ -250,13 +351,7 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for full guidelines. Key points:
 3. **Validate inputs**: Especially from browser extension and uploaded documents
 4. **Session management**: 24-hour timeout, invalidate on logout/credential change
 
-## Contributing
-
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for full guidelines. Key points:
-- Fork from `main` branch
-- Follow coding standards (TBD as project develops)
-- Add tests for changes
-- Update documentation
+---
 
 ## Common Pitfalls to Avoid
 
@@ -265,3 +360,60 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for full guidelines. Key points:
 - ❌ Don't store SSN fragments or government IDs
 - ❌ Don't expose credentials to AI components
 - ❌ Don't make the system submit applications automatically without user configuration
+
+---
+
+## Troubleshooting
+
+### Database Issues
+```bash
+# Reset database completely
+cd src/backend
+python database/init_db.py --drop --seed
+
+# Check connection
+psql -U postgres -d ai_job_assistant -c "SELECT version();"
+
+# View migrations status
+alembic current
+alembic history
+```
+
+### Python Environment Issues
+```bash
+# Reset virtual environment
+poetry env remove python
+poetry install
+poetry shell
+
+# Verify Python version
+python --version  # Should be 3.11+
+```
+
+### Frontend Build Issues
+```bash
+# Clear cache and reinstall
+rm -rf node_modules package-lock.json
+npm install
+
+# Check for type errors
+npm run type-check
+```
+
+### Extension Not Loading
+- Ensure Developer Mode is enabled in chrome://extensions
+- Check manifest.json is valid (no syntax errors)
+- Check browser console for Content Security Policy (CSP) errors
+- Reload extension after code changes
+
+### Test Failures
+```bash
+# Run specific test file
+pytest tests/unit/test_resume_parser.py -v
+
+# Run with debugging
+pytest tests/unit/test_resume_parser.py -v -s --pdb
+
+# Clear pytest cache
+pytest --cache-clear
+```

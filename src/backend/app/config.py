@@ -1,4 +1,5 @@
 """Application configuration using Pydantic Settings."""
+
 from pathlib import Path
 from typing import Any, Optional
 
@@ -9,7 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # Find project root (where .env should be)
 def get_project_root() -> Path:
     """Get the project root directory (3 levels up from this file).
-    
+
     Path structure:
     - This file: src/backend/app/config.py
     - Parent: src/backend/app/
@@ -53,10 +54,13 @@ class Settings(BaseSettings):
     )
 
     # Application Configuration
-    app_env: str = Field(default="development", description="Environment: development, staging, production")
+    gmail_client_id: Optional[str] = Field(default=None, description="Gmail OAuth client ID")
     secret_key: str = Field(..., description="Secret key for session management and JWT")
     debug: bool = Field(default=False, description="Enable debug mode")
     log_level: str = Field(default="INFO", description="Logging level")
+    app_env: str = Field(
+        default="development", description="Environment: development, staging, production"
+    )
 
     # Security & Encryption
     encryption_key: str = Field(..., description="Fernet encryption key for sensitive data")
@@ -67,9 +71,12 @@ class Settings(BaseSettings):
     openai_max_tokens: int = Field(default=4000, description="Max tokens per request")
 
     # OAuth & External Services
-    gmail_client_id: Optional[str] = Field(default=None, description="Gmail OAuth client ID")
-    gmail_client_secret: Optional[str] = Field(default=None, description="Gmail OAuth client secret")
-    google_calendar_client_id: Optional[str] = Field(default=None, description="Google Calendar OAuth client ID")
+    gmail_client_secret: Optional[str] = Field(
+        default=None, description="Gmail OAuth client secret"
+    )
+    google_calendar_client_id: Optional[str] = Field(
+        default=None, description="Google Calendar OAuth client ID"
+    )
     google_calendar_client_secret: Optional[str] = Field(
         default=None, description="Google Calendar OAuth client secret"
     )
@@ -81,36 +88,24 @@ class Settings(BaseSettings):
     )
 
     # Session Configuration
-    session_timeout_hours: int = Field(
-        default=24, description="Session timeout in hours"
-    )
+    session_timeout_hours: int = Field(default=24, description="Session timeout in hours")
     session_cookie_secure: bool = Field(
         default=False,
         description="Use secure cookies (HTTPS only in production)",
     )
 
     # File Upload Configuration
-    max_upload_size_mb: int = Field(
-        default=10, description="Maximum file upload size in MB"
-    )
-    upload_dir: Path = Field(
-        default=Path("./uploads"), description="Directory for uploaded files"
-    )
+    max_upload_size_mb: int = Field(default=10, description="Maximum file upload size in MB")
+    upload_dir: Path = Field(default=Path("./uploads"), description="Directory for uploaded files")
 
     # Rate Limiting
-    rate_limit_per_minute: int = Field(
-        default=60, description="API rate limit per minute"
-    )
+    rate_limit_per_minute: int = Field(default=60, description="API rate limit per minute")
 
     @property
     def cors_origins_list(self) -> list[str]:
         """Get CORS origins as a list."""
         if isinstance(self.cors_origins, str):
-            return [
-                origin.strip()
-                for origin in self.cors_origins.split(",")
-                if origin.strip()
-            ]
+            return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
         return [self.cors_origins]
 
     @field_validator("upload_dir", mode="before")
@@ -152,19 +147,16 @@ def load_settings() -> Settings:
             if not ENV_FILE.exists():
                 print("\nQuick fix:")
                 print("   1. Copy the template: cp .env.example .env")
-                print(
-                    "   2. Run setup script: "
-                    "cd src/backend && python scripts/setup_env.ps1"
-                )
+                print("   2. Run setup script: " "cd src/backend && python scripts/setup_env.ps1")
                 print("   3. Edit .env with your credentials")
             else:
                 print("\nThe .env file exists but is missing required values.")
-                print(f"   Check that these variables are set:")
-                print(f"   - DATABASE_URL")
-                print(f"   - DATABASE_ASYNC_URL")
-                print(f"   - SECRET_KEY")
-                print(f"   - ENCRYPTION_KEY")
-                print(f"   - OPENAI_API_KEY")
+                print("   Check that these variables are set:")
+                print("   - DATABASE_URL")
+                print("   - DATABASE_ASYNC_URL")
+                print("   - SECRET_KEY")
+                print("   - ENCRYPTION_KEY")
+                print("   - OPENAI_API_KEY")
             print()
         raise
 

@@ -16,7 +16,7 @@ def test_env_file():
     """Check if .env file exists."""
     # Look for .env in project root (3 levels up from this script)
     env_file = Path(__file__).parent.parent.parent.parent / ".env"
-    
+
     if not env_file.exists():
         print("❌ .env file not found!")
         print(f"   Expected location: {env_file.absolute()}")
@@ -25,15 +25,15 @@ def test_env_file():
         print("   • Linux/Mac: cd src/backend && bash scripts/setup_env.sh")
         print("   • Manual: cp .env.example .env")
         return False
-    
+
     print(f"✅ .env file exists at: {env_file.absolute()}")
-    
+
     # Check if it's not just the template
     content = env_file.read_text()
     if "generate-with" in content or "your-" in content:
         print("⚠️  .env file contains placeholder values")
         print("   Run the setup script or edit manually")
-    
+
     return True
 
 
@@ -41,6 +41,7 @@ def test_config_loading():
     """Test if configuration can be loaded."""
     try:
         from app.config import settings
+
         print("✅ Configuration loaded successfully")
         return True, settings
     except Exception as e:
@@ -57,15 +58,18 @@ def test_required_variables(settings):
         "encryption_key": "Fernet key",
         "openai_api_key": "sk-...",
     }
-    
+
     issues = []
-    for var, example in required.items():
+    for var, _ in required.items():
         value = getattr(settings, var, None)
         if not value:
             issues.append(f"  ❌ {var.upper()}: not set")
-        elif any(placeholder in str(value) for placeholder in ["your-", "generate-", "your_password", "your_key"]):
+        elif any(
+            placeholder in str(value)
+            for placeholder in ["your-", "generate-", "your_password", "your_key"]
+        ):
             issues.append(f"  ⚠️  {var.upper()}: still has placeholder value")
-    
+
     if issues:
         print("❌ Configuration issues found:")
         for issue in issues:
@@ -76,10 +80,13 @@ def test_required_variables(settings):
         print(f"     nano {env_file}")
         print("\n  2. Generate required keys:")
         print('     SECRET_KEY:     python -c "import secrets; print(secrets.token_urlsafe(32))"')
-        print('     ENCRYPTION_KEY: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"')
+        print(
+            '     ENCRYPTION_KEY: python -c "from cryptography.fernet import Fernet; '
+            'print(Fernet.generate_key().decode())"'
+        )
         print("\n  3. Get OpenAI API key from: https://platform.openai.com/api-keys")
         return False
-    
+
     print("✅ All required variables are properly configured")
     return True
 
@@ -90,7 +97,7 @@ def test_gitignore():
     if not gitignore.exists():
         print("⚠️  .gitignore not found")
         return False
-    
+
     content = gitignore.read_text()
     if ".env" in content:
         print("✅ .env is in .gitignore")
@@ -104,8 +111,9 @@ def test_gitignore():
 def test_database_connection():
     """Test database connection."""
     import asyncio
+
     from database.init_db import check_connection
-    
+
     print("\n🔍 Testing database connection...")
     result = asyncio.run(check_connection())
     return result
@@ -117,48 +125,51 @@ def main():
     print("Personal AI Job Assistant - Configuration Test")
     print("=" * 60)
     print()
-    
+
     results = []
-    
+
     # Test .env file
     results.append(test_env_file())
     print()
-    
+
     # Test config loading
     loaded, settings = test_config_loading()
     results.append(loaded)
     print()
-    
+
     if loaded:
         # Test required variables
         results.append(test_required_variables(settings))
         print()
-        
+
         # Print config summary
         print("📋 Configuration Summary:")
         print(f"   Environment: {settings.app_env}")
         print(f"   Debug: {settings.debug}")
-        print(f"   Database: {settings.database_url.split('@')[1] if '@' in settings.database_url else 'configured'}")
+        db_display = (
+            settings.database_url.split("@")[1] if "@" in settings.database_url else "configured"
+        )
+        print(f"   Database: {db_display}")
         print(f"   Redis: {settings.redis_url}")
         print(f"   AI Model: {settings.openai_model}")
         print(f"   CORS Origins: {settings.cors_origins_list}")
         print(f"   Upload Dir: {settings.upload_dir}")
         print()
-    
+
     # Test .gitignore
     results.append(test_gitignore())
     print()
-    
+
     # Test database connection (optional, requires DB to be running)
     try:
         results.append(test_database_connection())
     except Exception as e:
         print(f"⚠️  Could not test database connection: {e}")
         print("   Make sure PostgreSQL is running")
-    
+
     print()
     print("=" * 60)
-    
+
     if all(results):
         print("✅ All tests passed! Configuration is ready.")
         return 0

@@ -22,7 +22,7 @@ echo "3. Fixing test_config.py line 84..."
 # This one is trickier, let's just add parentheses
 sed -i '84s/database_async_url="postgresql+asyncpg:\/\/user:pass@localhost:5432\/testdb",/database_async_url=(\n                "postgresql+asyncpg:\/\/user:pass@localhost:5432\/testdb"\n            ),/' scripts/test_config.py
 
-# Fix test_config.py line 149 - split long line  
+# Fix test_config.py line 149 - split long line
 echo "4. Fixing test_config.py line 149..."
 # This needs manual editing
 

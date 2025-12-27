@@ -29,7 +29,7 @@ print_info() {
 }
 
 # Check if running as root
-if [ "$EUID" -eq 0 ]; then 
+if [ "$EUID" -eq 0 ]; then
     print_error "Please don't run this script as root"
     exit 1
 fi
@@ -39,7 +39,7 @@ echo "--------------------------------------------------"
 if command -v python3 &> /dev/null; then
     PYTHON_VERSION=$(python3 --version | awk '{print $2}')
     print_status "Python is installed: $PYTHON_VERSION"
-    
+
     # Check if version is 3.11 or higher
     REQUIRED_VERSION="3.11"
     if python3 -c "import sys; exit(0 if sys.version_info >= (3, 11) else 1)"; then
@@ -63,10 +63,10 @@ if command -v poetry &> /dev/null; then
 else
     print_info "Installing Poetry..."
     curl -sSL https://install.python-poetry.org | python3 -
-    
+
     # Add Poetry to PATH for this session
     export PATH="$HOME/.local/bin:$PATH"
-    
+
     if command -v poetry &> /dev/null; then
         print_status "Poetry installed successfully: $(poetry --version)"
         print_info "Add to your shell profile: export PATH=\"\$HOME/.local/bin:\$PATH\""
@@ -90,7 +90,7 @@ else
     else
         python3 -m pip install --user pre-commit
     fi
-    
+
     if command -v pre-commit &> /dev/null; then
         print_status "pre-commit installed successfully: $(pre-commit --version)"
     else
@@ -106,7 +106,7 @@ echo "--------------------------------------------------"
 if command -v node &> /dev/null; then
     NODE_VERSION=$(node --version)
     print_status "Node.js is installed: $NODE_VERSION"
-    
+
     # Check if version is 18 or higher
     NODE_MAJOR=$(node --version | cut -d'v' -f2 | cut -d'.' -f1)
     if [ "$NODE_MAJOR" -ge 18 ]; then
@@ -127,7 +127,7 @@ if command -v pnpm &> /dev/null; then
 else
     print_info "Installing pnpm..."
     npm install -g pnpm
-    
+
     if command -v pnpm &> /dev/null; then
         print_status "pnpm installed successfully: $(pnpm --version)"
     else
@@ -161,7 +161,7 @@ cd src/frontend
 if [ -f "package.json" ]; then
     print_info "Installing Node.js dependencies with pnpm..."
     pnpm install
-    
+
     if [ $? -eq 0 ]; then
         print_status "Frontend dependencies installed successfully"
     else
@@ -182,7 +182,7 @@ cd src/extension
 if [ -f "package.json" ]; then
     print_info "Installing extension dependencies with npm..."
     npm install
-    
+
     if [ $? -eq 0 ]; then
         print_status "Extension dependencies installed successfully"
     else

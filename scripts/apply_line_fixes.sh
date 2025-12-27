@@ -24,7 +24,7 @@ for i, line in enumerate(lines):
             print(f"✓ Fixed config.py line {i+1}")
             break
 
-# Line 75-76 - find secret_key line  
+# Line 75-76 - find secret_key line
 for i, line in enumerate(lines):
     if 'secret_key: str = Field' in line and len(line) > 100:
         lines[i] = '    secret_key: str = Field('

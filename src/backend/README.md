@@ -36,18 +36,40 @@ poetry shell
 
 ### 2. Configure Environment
 
+**Important:** The `.env` file must be in the **project root** (not in `src/backend`).
+
 ```bash
+# Navigate to project root
+cd ../..
+
 # Copy environment template
-cp ../../.env.example ../../.env
+cp .env.example .env
 
-# Generate SECRET_KEY
+# Option 1: Run automated setup (recommended)
+cd src/backend
+# Windows:
+powershell scripts/setup_env.ps1
+# Linux/Mac:
+bash scripts/setup_env.sh
+
+# Option 2: Generate keys manually
 python -c "import secrets; print('SECRET_KEY=' + secrets.token_urlsafe(32))"
-
-# Generate ENCRYPTION_KEY
 python -c "from cryptography.fernet import Fernet; print('ENCRYPTION_KEY=' + Fernet.generate_key().decode())"
 
 # Edit .env and add your generated keys and API credentials
-nano ../../.env
+# Use an editor to open: <project-root>/.env
+nano ../../.env  # or notepad, vim, etc.
+```
+
+**Location structure:**
+```
+personal-ai-job-assistant/    ← .env goes HERE
+├── .env                       ✓ Correct location
+├── .env.example
+└── src/
+    └── backend/
+        ├── app/
+        └── ...
 ```
 
 ### 3. Initialize Database

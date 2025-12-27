@@ -14,13 +14,26 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 def test_env_file():
     """Check if .env file exists."""
-    env_file = Path(__file__).parent.parent.parent / ".env"
+    # Look for .env in project root (3 levels up from this script)
+    env_file = Path(__file__).parent.parent.parent.parent / ".env"
+    
     if not env_file.exists():
         print("❌ .env file not found!")
-        print(f"   Expected location: {env_file}")
-        print("   Run: cp .env.example .env")
+        print(f"   Expected location: {env_file.absolute()}")
+        print("\n💡 To create it, run ONE of these:")
+        print("   • Windows: cd src/backend && powershell scripts/setup_env.ps1")
+        print("   • Linux/Mac: cd src/backend && bash scripts/setup_env.sh")
+        print("   • Manual: cp .env.example .env")
         return False
-    print("✅ .env file exists")
+    
+    print(f"✅ .env file exists at: {env_file.absolute()}")
+    
+    # Check if it's not just the template
+    content = env_file.read_text()
+    if "generate-with" in content or "your-" in content:
+        print("⚠️  .env file contains placeholder values")
+        print("   Run the setup script or edit manually")
+    
     return True
 
 
@@ -64,7 +77,7 @@ def test_required_variables(settings):
 
 def test_gitignore():
     """Check if .env is in .gitignore."""
-    gitignore = Path(__file__).parent.parent.parent / ".gitignore"
+    gitignore = Path(__file__).parent.parent.parent.parent / ".gitignore"
     if not gitignore.exists():
         print("⚠️  .gitignore not found")
         return False
@@ -75,7 +88,7 @@ def test_gitignore():
         return True
     else:
         print("❌ .env not found in .gitignore!")
-        print("   Run: echo '.env' >> .gitignore")
+        print("   Add it to prevent committing secrets")
         return False
 
 

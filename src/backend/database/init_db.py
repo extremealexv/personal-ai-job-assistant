@@ -21,7 +21,12 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 # Load environment variables from .env file in project root
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+# Path: src/backend/database/init_db.py
+#   .parent -> src/backend/database/
+#   .parent.parent -> src/backend/
+#   .parent.parent.parent -> src/
+#   .parent.parent.parent.parent -> project root
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 ENV_FILE = PROJECT_ROOT / ".env"
 
 if ENV_FILE.exists():

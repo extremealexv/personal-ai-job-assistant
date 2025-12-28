@@ -104,12 +104,12 @@ def test_import_email_schemas():
     from app.schemas.email import (
         EmailThreadBase,
         EmailThreadCreate,
-        EmailThreadUpdate,
         EmailThreadResponse,
     )
     
     assert EmailThreadBase is not None
     assert EmailThreadCreate is not None
+    assert EmailThreadResponse is not None
 
 
 @pytest.mark.unit

@@ -1,6 +1,7 @@
 """Pytest configuration and shared fixtures."""
 
 import asyncio
+import os
 from typing import AsyncGenerator, Generator
 
 import pytest
@@ -16,14 +17,24 @@ from app.main import app
 from app.models.base import Base
 
 # Test database URL (use separate test database)
-TEST_DATABASE_URL = settings.database_url.replace(
-    settings.database_name,
-    f"{settings.database_name}_test"
-)
-TEST_DATABASE_ASYNC_URL = settings.database_async_url.replace(
-    settings.database_name,
-    f"{settings.database_name}_test"
-)
+# Extract database name from URL and append _test
+database_url = settings.database_url
+database_async_url = settings.database_async_url
+
+# For PostgreSQL URLs like postgresql://user:pass@host:port/dbname
+if database_url and "/" in database_url:
+    base_url, db_name = database_url.rsplit("/", 1)
+    TEST_DATABASE_URL = f"{base_url}/{db_name}_test"
+else:
+    # Fallback: use environment variable or default
+    TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "postgresql://ai_job_user:your_password@localhost:5432/ai_job_assistant_test")
+
+if database_async_url and "/" in database_async_url:
+    base_url, db_name = database_async_url.rsplit("/", 1)
+    TEST_DATABASE_ASYNC_URL = f"{base_url}/{db_name}_test"
+else:
+    # Fallback: use environment variable or default
+    TEST_DATABASE_ASYNC_URL = os.getenv("TEST_DATABASE_ASYNC_URL", "postgresql+asyncpg://ai_job_user:your_password@localhost:5432/ai_job_assistant_test")
 
 
 # ============================================================================

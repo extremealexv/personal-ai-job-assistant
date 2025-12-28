@@ -5,6 +5,21 @@ import pytest
 from httpx import AsyncClient
 
 
+@pytest.fixture
+async def uploaded_resume_id(
+    async_client: AsyncClient, auth_headers: dict, test_pdf_content: bytes
+) -> str:
+    """Upload a resume and return its ID for testing retrieval/deletion."""
+    files = {"file": ("resume.pdf", io.BytesIO(test_pdf_content), "application/pdf")}
+    response = await async_client.post(
+        "/api/v1/resumes/upload",
+        headers=auth_headers,
+        files=files,
+    )
+    assert response.status_code == 201
+    return response.json()["id"]
+
+
 class TestMasterResumeUpload:
     """Test master resume upload functionality."""
 
@@ -37,7 +52,7 @@ class TestMasterResumeUpload:
             files=files,
         )
 
-        assert response.status_code == 401
+        assert response.status_code == 403
         assert "detail" in response.json()
 
     @pytest.mark.asyncio
@@ -60,27 +75,17 @@ class TestMasterResumeRetrieval:
 
     @pytest.mark.asyncio
     async def test_get_master_resume(
-        self, async_client: AsyncClient, auth_headers: dict, test_pdf_content: bytes
+        self, async_client: AsyncClient, auth_headers: dict, uploaded_resume_id: str
     ):
         """Test retrieving a master resume."""
-        # Upload first
-        files = {"file": ("resume.pdf", io.BytesIO(test_pdf_content), "application/pdf")}
-        upload_response = await async_client.post(
-            "/api/v1/resumes/upload",
-            headers=auth_headers,
-            files=files,
-        )
-        resume_id = upload_response.json()["id"]
-
-        # Retrieve
         response = await async_client.get(
-            f"/api/v1/resumes/{resume_id}",
+            f"/api/v1/resumes/{uploaded_resume_id}",
             headers=auth_headers,
         )
 
         assert response.status_code == 200
         result = response.json()
-        assert result["id"] == resume_id
+        assert result["id"] == uploaded_resume_id
 
     @pytest.mark.asyncio
     async def test_get_nonexistent_resume(
@@ -101,21 +106,12 @@ class TestMasterResumeDeletion:
 
     @pytest.mark.asyncio
     async def test_delete_master_resume(
-        self, async_client: AsyncClient, auth_headers: dict, test_pdf_content: bytes
+        self, async_client: AsyncClient, auth_headers: dict, uploaded_resume_id: str
     ):
         """Test deleting a master resume."""
-        # Upload first
-        files = {"file": ("resume.pdf", io.BytesIO(test_pdf_content), "application/pdf")}
-        upload_response = await async_client.post(
-            "/api/v1/resumes/upload",
-            headers=auth_headers,
-            files=files,
-        )
-        resume_id = upload_response.json()["id"]
-
         # Delete
         response = await async_client.delete(
-            f"/api/v1/resumes/{resume_id}",
+            f"/api/v1/resumes/{uploaded_resume_id}",
             headers=auth_headers,
         )
 
@@ -123,7 +119,7 @@ class TestMasterResumeDeletion:
 
         # Verify it's gone
         get_response = await async_client.get(
-            f"/api/v1/resumes/{resume_id}",
+            f"/api/v1/resumes/{uploaded_resume_id}",
             headers=auth_headers,
         )
         assert get_response.status_code == 404

@@ -85,4 +85,4 @@ async def test_user_to_dict(db_session: AsyncSession):
     assert "updated_at" in user_dict
     assert user_dict["email"] == test_email
     # Password hash should not be in dict
-    assert "password_hash" not in user_dict or user_dict.get("password_hash") is None
+    assert "password_hash" not in user_dict

@@ -3,7 +3,7 @@
 from collections.abc import AsyncGenerator
 from typing import Any
 
-from sqlalchemy import event, pool
+from sqlalchemy import event, pool, text
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -91,7 +91,7 @@ async def check_db_connection() -> bool:
     """
     try:
         async with engine.connect() as conn:
-            await conn.execute("SELECT 1")
+            await conn.execute(text("SELECT 1"))
         return True
     except Exception as e:
         print(f"❌ Database connection failed: {e}")

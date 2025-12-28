@@ -3,11 +3,12 @@ import io
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.fixture
 async def uploaded_resume_id(
-    async_client: AsyncClient, auth_headers: dict, test_pdf_content: bytes
+    async_client: AsyncClient, auth_headers: dict, test_pdf_content: bytes, db_session
 ) -> str:
     """Upload a resume and return its ID for testing retrieval/deletion."""
     files = {"file": ("resume.pdf", io.BytesIO(test_pdf_content), "application/pdf")}
@@ -16,7 +17,11 @@ async def uploaded_resume_id(
         headers=auth_headers,
         files=files,
     )
-    assert response.status_code == 201
+    assert response.status_code == 201, f"Upload failed: {response.json()}"
+    
+    # Ensure the upload is committed and visible
+    await db_session.commit()
+    
     return response.json()["id"]
 
 

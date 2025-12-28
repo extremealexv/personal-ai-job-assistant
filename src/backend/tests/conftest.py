@@ -165,7 +165,7 @@ async def test_user(db_session: AsyncSession):
         email_verified=True,
     )
     db_session.add(user)
-    await db_session.commit()
+    await db_session.flush()  # Make user available in session without committing
     await db_session.refresh(user)
     
     return user
@@ -229,13 +229,30 @@ startxref
 
 @pytest.fixture(autouse=True)
 async def reset_db(db_session: AsyncSession) -> AsyncGenerator[None, None]:
-    """Reset database before each test.
+    """Reset database before and after each test.
     
-    This fixture runs automatically before each test to ensure clean state.
+    This fixture runs automatically to ensure clean state and prevent constraint violations.
     """
+    # Clean up before test
+    await db_session.rollback()
+    
     yield
     
-    # Rollback any uncommitted changes
+    # Clean up after test - delete all data to prevent unique constraint violations
+    from app.models.user import User
+    from app.models.resume import MasterResume, WorkExperience, Education, Skill, Certification, ResumeVersion
+    
+    # Delete in reverse foreign key dependency order
+    await db_session.execute("DELETE FROM resume_versions")
+    await db_session.execute("DELETE FROM certifications")
+    await db_session.execute("DELETE FROM skills")
+    await db_session.execute("DELETE FROM education")
+    await db_session.execute("DELETE FROM work_experiences")
+    await db_session.execute("DELETE FROM master_resumes")
+    await db_session.execute("DELETE FROM users")
+    await db_session.commit()
+    
+    # Rollback any remaining uncommitted changes
     await db_session.rollback()
 
 

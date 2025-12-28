@@ -52,22 +52,44 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 
 @pytest.fixture(scope="session")
 async def test_engine() -> AsyncGenerator[AsyncEngine, None]:
-    """Create test database engine."""
-    engine = create_async_engine(
-        TEST_DATABASE_ASYNC_URL,
-        echo=False,
-        poolclass=pool.NullPool,  # No connection pooling for tests
-    )
+    """Create test database engine.
     
-    # Create all tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    Note: The test database must exist before running tests.
+    Run 'python scripts/setup_test_db.py' to create it.
+    """
+    try:
+        engine = create_async_engine(
+            TEST_DATABASE_ASYNC_URL,
+            echo=False,
+            poolclass=pool.NullPool,  # No connection pooling for tests
+        )
+    except Exception as e:
+        raise RuntimeError(
+            f"Could not connect to test database: {TEST_DATABASE_ASYNC_URL}\n"
+            f"Make sure it exists by running: python scripts/setup_test_db.py\n"
+            f"Error: {e}"
+        ) from e
+    
+    # Create all tables (in case they don't exist)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    except Exception as e:
+        await engine.dispose()
+        raise RuntimeError(
+            f"Could not create tables in test database.\n"
+            f"Try running: python scripts/setup_test_db.py --drop\n"
+            f"Error: {e}"
+        ) from e
     
     yield engine
     
-    # Drop all tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    # Cleanup: drop all tables after tests
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+    except Exception:
+        pass  # Ignore cleanup errors
     
     await engine.dispose()
 

@@ -30,7 +30,8 @@ from app import models  # noqa: F401
 config = context.config
 
 # Override sqlalchemy.url with the actual database URL from settings
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# Use async URL for async migrations
+config.set_main_option("sqlalchemy.url", settings.database_async_url)
 
 # Interpret the config file for Python logging
 if config.config_file_name is not None:
@@ -51,6 +52,10 @@ def run_migrations_offline() -> None:
     script output.
     """
     url = config.get_main_option("sqlalchemy.url")
+    # Remove +asyncpg for offline mode
+    if "+asyncpg" in url:
+        url = url.replace("+asyncpg", "")
+    
     context.configure(
         url=url,
         target_metadata=target_metadata,

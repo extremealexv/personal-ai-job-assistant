@@ -203,6 +203,7 @@ test_work_experience_crud() {
         print_success "Work experience created: $WORK_EXP_ID"
     else
         print_failure "Expected 201, got $HTTP_CODE"
+        echo "DEBUG: Response body: $BODY"
     fi
     
     # Test 3: List work experiences (should have 1)

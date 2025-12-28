@@ -305,7 +305,7 @@ def pytest_configure(config):
 
 
 @pytest.fixture
-async def sample_job_posting(db_session: AsyncSession, test_user: dict) -> dict:
+async def sample_job_posting(db_session: AsyncSession, test_user) -> dict:
     """Create a sample job posting for testing.
     
     Returns:
@@ -314,7 +314,7 @@ async def sample_job_posting(db_session: AsyncSession, test_user: dict) -> dict:
     from app.models.job import JobPosting, JobSource, JobStatus
     
     job = JobPosting(
-        user_id=test_user["id"],
+        user_id=test_user.id,
         company_name="TechCorp Inc",
         job_title="Senior Backend Engineer",
         job_url="https://techcorp.example.com/jobs/senior-backend-engineer",
@@ -348,7 +348,7 @@ async def sample_job_posting(db_session: AsyncSession, test_user: dict) -> dict:
 
 
 @pytest.fixture
-async def multiple_job_postings(db_session: AsyncSession, test_user: dict) -> list[dict]:
+async def multiple_job_postings(db_session: AsyncSession, test_user) -> list[dict]:
     """Create multiple job postings for testing pagination and filtering.
     
     Returns:
@@ -392,7 +392,7 @@ async def multiple_job_postings(db_session: AsyncSession, test_user: dict) -> li
     created_jobs = []
     for job_data in jobs_data:
         job = JobPosting(
-            user_id=test_user["id"],
+            user_id=test_user.id,
             company_name=job_data["company_name"],
             job_title=job_data["job_title"],
             job_url=f"https://{job_data['company_name'].lower()}.com/jobs",

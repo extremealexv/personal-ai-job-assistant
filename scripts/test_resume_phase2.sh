@@ -51,19 +51,26 @@ setup_test_user() {
         -H "Content-Type: application/json" \
         -d "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\",\"full_name\":\"Test User Phase 2\"}")
     
+    echo "DEBUG: Register response: $REGISTER_RESPONSE"
+    
     TEST_USER_ID=$(echo $REGISTER_RESPONSE | grep -o '"id":"[^"]*' | cut -d'"' -f4)
+    echo "DEBUG: User ID: $TEST_USER_ID"
     
     # Login
     LOGIN_RESPONSE=$(curl -s -X POST "$API_URL/auth/login" \
         -H "Content-Type: application/x-www-form-urlencoded" \
         -d "username=$TEST_EMAIL&password=$TEST_PASSWORD")
     
+    echo "DEBUG: Login response: $LOGIN_RESPONSE"
+    
     AUTH_TOKEN=$(echo $LOGIN_RESPONSE | grep -o '"access_token":"[^"]*' | cut -d'"' -f4)
+    echo "DEBUG: Auth token: $AUTH_TOKEN"
     
     if [ -n "$AUTH_TOKEN" ]; then
         print_success "Test user created and authenticated"
     else
         print_failure "Failed to authenticate test user"
+        echo "Full login response: $LOGIN_RESPONSE"
         exit 1
     fi
 }

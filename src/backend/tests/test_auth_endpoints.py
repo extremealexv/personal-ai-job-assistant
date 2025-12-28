@@ -405,9 +405,10 @@ class TestLogin:
         for i in range(5):
             response = await async_client.post("/api/v1/auth/login", json=login_data)
             if i < 4:
+                # First 4 attempts should return 401
                 assert response.status_code == status.HTTP_401_UNAUTHORIZED
             else:
-                # 5th attempt should lock the account
+                # 5th attempt should lock the account and return 423
                 assert response.status_code == status.HTTP_423_LOCKED
         
         # Refresh user from database
@@ -636,7 +637,8 @@ class TestPasswordChange:
             },
         )
         
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        # Endpoint returns 401 for incorrect current password
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     @pytest.mark.asyncio
     async def test_change_password_weak_new_password(

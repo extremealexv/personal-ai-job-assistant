@@ -165,7 +165,7 @@ async def test_user(db_session: AsyncSession):
         email_verified=True,
     )
     db_session.add(user)
-    await db_session.flush()  # Make user available in session without committing
+    await db_session.commit()  # Commit for integration tests
     await db_session.refresh(user)
     
     return user

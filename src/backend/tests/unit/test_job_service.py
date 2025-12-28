@@ -82,7 +82,7 @@ class TestJobServiceCRUD:
             requirements="Python experience required"
         )
         
-        job = await JobService.create_job_posting(db_session, test_user["id"], job_data)
+        job = await JobService.create_job_posting(db_session, test_user.id, job_data)
         
         assert job.id is not None
         assert job.company_name == "TestCorp"
@@ -97,7 +97,7 @@ class TestJobServiceCRUD:
         job = await JobService.get_job_posting(
             db_session,
             sample_job_posting["id"],
-            test_user["id"]
+            test_user.id
         )
         
         assert job.id == sample_job_posting["id"]
@@ -106,7 +106,7 @@ class TestJobServiceCRUD:
     async def test_get_job_posting_not_found(self, db_session, test_user):
         """Test getting non-existent job posting raises NotFoundError."""
         with pytest.raises(NotFoundError, match="Job posting not found"):
-            await JobService.get_job_posting(db_session, uuid4(), test_user["id"])
+            await JobService.get_job_posting(db_session, uuid4(), test_user.id)
 
     async def test_get_job_posting_wrong_user(self, db_session, sample_job_posting):
         """Test getting job from different user raises ForbiddenError."""
@@ -150,7 +150,7 @@ class TestJobServiceCRUD:
         job = await JobService.update_job_posting(
             db_session,
             sample_job_posting["id"],
-            test_user["id"],
+            test_user.id,
             update_data
         )
         
@@ -165,7 +165,7 @@ class TestJobServiceCRUD:
         job = await JobService.update_job_status(
             db_session,
             sample_job_posting["id"],
-            test_user["id"],
+            test_user.id,
             status_data
         )
         
@@ -177,7 +177,7 @@ class TestJobServiceCRUD:
         await JobService.delete_job_posting(
             db_session,
             sample_job_posting["id"],
-            test_user["id"]
+            test_user.id
         )
         
         # Verify job is soft deleted
@@ -185,7 +185,7 @@ class TestJobServiceCRUD:
             await JobService.get_job_posting(
                 db_session,
                 sample_job_posting["id"],
-                test_user["id"]
+                test_user.id
             )
 
 
@@ -199,7 +199,7 @@ class TestJobServiceSearch:
         
         jobs, total = await JobService.get_user_job_postings(
             db_session,
-            test_user["id"],
+            test_user.id,
             search_params
         )
         
@@ -212,7 +212,7 @@ class TestJobServiceSearch:
         
         jobs, total = await JobService.get_user_job_postings(
             db_session,
-            test_user["id"],
+            test_user.id,
             search_params
         )
         
@@ -225,7 +225,7 @@ class TestJobServiceSearch:
         
         jobs, total = await JobService.get_user_job_postings(
             db_session,
-            test_user["id"],
+            test_user.id,
             search_params
         )
         
@@ -239,7 +239,7 @@ class TestJobServiceSearch:
         
         jobs, total = await JobService.get_user_job_postings(
             db_session,
-            test_user["id"],
+            test_user.id,
             search_params
         )
         
@@ -253,7 +253,7 @@ class TestJobServiceSearch:
         
         jobs, total = await JobService.get_user_job_postings(
             db_session,
-            test_user["id"],
+            test_user.id,
             search_params
         )
         
@@ -267,7 +267,7 @@ class TestJobServiceSearch:
         
         jobs, total = await JobService.get_user_job_postings(
             db_session,
-            test_user["id"],
+            test_user.id,
             search_params
         )
         
@@ -285,7 +285,7 @@ class TestJobServiceSearch:
         
         jobs, total = await JobService.get_user_job_postings(
             db_session,
-            test_user["id"],
+            test_user.id,
             search_params
         )
         
@@ -300,7 +300,7 @@ class TestJobServiceStats:
 
     async def test_get_job_stats_empty(self, db_session, test_user):
         """Test stats with no jobs."""
-        stats = await JobService.get_job_stats(db_session, test_user["id"])
+        stats = await JobService.get_job_stats(db_session, test_user.id)
         
         assert stats.total_jobs == 0
         assert stats.by_status == {}
@@ -310,7 +310,7 @@ class TestJobServiceStats:
 
     async def test_get_job_stats_with_data(self, db_session, test_user, multiple_job_postings):
         """Test stats with multiple jobs."""
-        stats = await JobService.get_job_stats(db_session, test_user["id"])
+        stats = await JobService.get_job_stats(db_session, test_user.id)
         
         assert stats.total_jobs == 5
         assert len(stats.by_status) > 0

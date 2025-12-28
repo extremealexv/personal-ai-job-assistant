@@ -43,10 +43,12 @@ async def database_health() -> DatabaseHealthResponse:
     
     Tests database connectivity and returns connection status.
     """
-    # TODO: Implement actual database connection test
-    # For now, return a placeholder response
+    from app.db import check_db_connection
+    
+    connected = await check_db_connection()
+    
     return DatabaseHealthResponse(
-        status="ok",
-        connected=False,
-        message="Database health check not yet implemented",
+        status="ok" if connected else="error",
+        connected=connected,
+        message="Database connection successful" if connected else "Database connection failed",
     )

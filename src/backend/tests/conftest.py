@@ -165,7 +165,7 @@ async def test_user(db_session: AsyncSession):
         email_verified=True,
     )
     db_session.add(user)
-    await db_session.flush()  # Flush makes user available in session
+    await db_session.commit()  # Commit so user is visible to all queries in this session
     await db_session.refresh(user)
     
     return user

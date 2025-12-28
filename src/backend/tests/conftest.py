@@ -269,6 +269,9 @@ async def reset_db(db_session: AsyncSession) -> AsyncGenerator[None, None]:
     
     try:
         # Delete in reverse foreign key dependency order
+        await db_session.execute(text("DELETE FROM cover_letters"))
+        await db_session.execute(text("DELETE FROM applications"))
+        await db_session.execute(text("DELETE FROM job_postings"))
         await db_session.execute(text("DELETE FROM resume_versions"))
         await db_session.execute(text("DELETE FROM certifications"))
         await db_session.execute(text("DELETE FROM skills"))
@@ -293,3 +296,122 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "integration: Integration tests (with DB)")
     config.addinivalue_line("markers", "e2e: End-to-end tests (full workflow)")
     config.addinivalue_line("markers", "slow: Slow tests")
+    config.addinivalue_line("markers", "job_management: Job management tests")
+
+
+# ============================================================================
+# Job Posting Fixtures
+# ============================================================================
+
+
+@pytest.fixture
+async def sample_job_posting(db_session: AsyncSession, test_user: dict) -> dict:
+    """Create a sample job posting for testing.
+    
+    Returns:
+        Dictionary with job posting data including ID
+    """
+    from app.models.job import JobPosting, JobSource, JobStatus
+    
+    job = JobPosting(
+        user_id=test_user["id"],
+        company_name="TechCorp Inc",
+        job_title="Senior Backend Engineer",
+        job_url="https://techcorp.example.com/jobs/senior-backend-engineer",
+        source=JobSource.MANUAL,
+        location="San Francisco, CA",
+        salary_range="$150k-$200k",
+        employment_type="Full-time",
+        remote_policy="Hybrid",
+        job_description="We are seeking a Senior Backend Engineer to join our team...",
+        requirements="5+ years Python experience, FastAPI, PostgreSQL",
+        nice_to_have="Experience with Redis, Celery, Docker",
+        interest_level=4,
+        notes="Great company culture",
+        extracted_keywords=["python", "fastapi", "postgresql", "redis", "docker"],
+        status=JobStatus.SAVED
+    )
+    
+    db_session.add(job)
+    await db_session.flush()
+    await db_session.refresh(job)
+    
+    return {
+        "id": job.id,
+        "user_id": job.user_id,
+        "company_name": job.company_name,
+        "job_title": job.job_title,
+        "job_url": job.job_url,
+        "status": job.status,
+        "interest_level": job.interest_level
+    }
+
+
+@pytest.fixture
+async def multiple_job_postings(db_session: AsyncSession, test_user: dict) -> list[dict]:
+    """Create multiple job postings for testing pagination and filtering.
+    
+    Returns:
+        List of dictionaries with job posting data
+    """
+    from app.models.job import JobPosting, JobSource, JobStatus
+    
+    jobs_data = [
+        {
+            "company_name": "TechCorp",
+            "job_title": "Senior Backend Engineer",
+            "status": JobStatus.SAVED,
+            "interest_level": 5
+        },
+        {
+            "company_name": "DataSoft",
+            "job_title": "Python Developer",
+            "status": JobStatus.APPLIED,
+            "interest_level": 4
+        },
+        {
+            "company_name": "CloudNine",
+            "job_title": "Full Stack Engineer",
+            "status": JobStatus.INTERVIEWING,
+            "interest_level": 3
+        },
+        {
+            "company_name": "StartupXYZ",
+            "job_title": "Backend Developer",
+            "status": JobStatus.SAVED,
+            "interest_level": 2
+        },
+        {
+            "company_name": "MegaCorp",
+            "job_title": "Software Engineer",
+            "status": JobStatus.REJECTED,
+            "interest_level": 1
+        }
+    ]
+    
+    created_jobs = []
+    for job_data in jobs_data:
+        job = JobPosting(
+            user_id=test_user["id"],
+            company_name=job_data["company_name"],
+            job_title=job_data["job_title"],
+            job_url=f"https://{job_data['company_name'].lower()}.com/jobs",
+            source=JobSource.MANUAL,
+            status=job_data["status"],
+            interest_level=job_data["interest_level"],
+            job_description=f"Job at {job_data['company_name']}",
+            extracted_keywords=["python", "backend", "api"]
+        )
+        db_session.add(job)
+        await db_session.flush()
+        await db_session.refresh(job)
+        
+        created_jobs.append({
+            "id": job.id,
+            "company_name": job.company_name,
+            "job_title": job.job_title,
+            "status": job.status,
+            "interest_level": job.interest_level
+        })
+    
+    return created_jobs

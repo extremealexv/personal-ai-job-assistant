@@ -96,19 +96,26 @@ async def test_engine() -> AsyncGenerator[AsyncEngine, None]:
 
 @pytest.fixture
 async def db_session(test_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
-    """Create database session for tests.
+    """Create database session for tests with transaction management.
     
-    Each test gets a fresh session that's rolled back after the test.
+    Uses nested transactions (savepoints) so data persists within test
+    but rolls back after test completes.
     """
+    connection = await test_engine.connect()
+    transaction = await connection.begin()
+    
     async_session = async_sessionmaker(
-        test_engine,
+        bind=connection,
         class_=AsyncSession,
         expire_on_commit=False,
+        join_transaction_mode="create_savepoint"
     )
     
     async with async_session() as session:
         yield session
-        await session.rollback()
+    
+    await transaction.rollback()
+    await connection.close()
 
 
 # ============================================================================

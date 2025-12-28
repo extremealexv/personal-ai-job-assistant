@@ -99,6 +99,7 @@ startxref
         print_success "Test resume uploaded: $MASTER_RESUME_ID"
     else
         print_failure "Failed to upload test resume"
+        echo "DEBUG: Upload response: $UPLOAD_RESPONSE"
         exit 1
     fi
 }

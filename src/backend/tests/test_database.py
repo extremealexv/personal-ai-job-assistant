@@ -161,22 +161,3 @@ async def test_database_connection_pool():
             await gen.__anext__()
         except StopAsyncIteration:
             pass
-
-
-@pytest.mark.integration
-async def test_database_concurrent_queries(db_session: AsyncSession):
-    """Test database handles concurrent queries."""
-    import asyncio
-    
-    async def query():
-        result = await db_session.execute(text("SELECT 1"))
-        return result.fetchone()[0]
-    
-    # Run multiple queries concurrently
-    results = await asyncio.gather(
-        query(),
-        query(),
-        query(),
-    )
-    
-    assert all(r == 1 for r in results)

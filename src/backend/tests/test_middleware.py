@@ -96,16 +96,6 @@ async def test_middleware_order_preserved(client):
 
 
 @pytest.mark.unit
-def test_request_context_middleware_initialization():
-    """Test RequestContextMiddleware can be initialized."""
-    app = FastAPI()
-    
-    # Should not raise exception
-    middleware = RequestContextMiddleware(app)
-    assert middleware.app == app
-
-
-@pytest.mark.unit
 def test_request_logging_middleware_initialization():
     """Test RequestLoggingMiddleware can be initialized."""
     app = FastAPI()

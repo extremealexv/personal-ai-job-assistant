@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db import get_db, get_engine, init_db, close_db
+from app.db import get_db, engine
 
 
 @pytest.mark.integration
@@ -134,12 +134,10 @@ async def test_get_db_dependency():
 
 
 @pytest.mark.unit
-def test_get_engine_returns_engine():
-    """Test get_engine returns SQLAlchemy engine."""
-    engine = get_engine()
-    
+def test_engine_is_configured():
+    """Test that engine is properly configured."""
     assert engine is not None
-    assert hasattr(engine, "connect")
+    assert hasattr(engine, "url")
     assert hasattr(engine, "dispose")
 
 

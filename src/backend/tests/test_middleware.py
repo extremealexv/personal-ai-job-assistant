@@ -5,10 +5,7 @@ from httpx import AsyncClient
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from app.core.middleware import (
-    RequestContextMiddleware,
-    RequestLoggingMiddleware,
-)
+from app.core.middleware import RequestLoggingMiddleware
 
 
 @pytest.mark.integration

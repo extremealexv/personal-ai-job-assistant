@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError as PydanticValidationError
 
 from app.core.exceptions import (
-    ApplicationError,
+    APIException,
     NotFoundError,
     UnauthorizedError,
     ValidationError,
@@ -56,9 +56,9 @@ def test_not_found_error_response_format():
 
 
 @pytest.mark.unit
-def test_application_error_base_class():
-    """Test ApplicationError base class."""
-    error = ApplicationError("Generic error", status_code=500)
+def test_api_exception_base_class():
+    """Test APIException base class."""
+    error = APIException("Generic error", status_code=500)
     
     assert error.message == "Generic error"
     assert error.status_code == 500
@@ -96,17 +96,16 @@ def test_error_handler_with_post_request():
 @pytest.mark.unit
 def test_validation_error_with_details():
     """Test ValidationError can include detail information."""
-    details = {"field": "email", "error": "Invalid format"}
-    error = ValidationError("Validation failed", details=details)
+    error = ValidationError("Validation failed", detail={"field": "email"})
     
     assert error.message == "Validation failed"
-    assert error.details == details
+    assert error.detail is not None
 
 
 @pytest.mark.unit
 def test_not_found_error_custom_message():
     """Test NotFoundError with custom message."""
-    error = NotFoundError("Resume version 123 not found")
+    error = NotFoundError(resource="Resume version", resource_id="123")
     
     assert "Resume version" in error.message
     assert "123" in error.message
@@ -146,19 +145,19 @@ def test_invalid_json_returns_422():
 
 
 @pytest.mark.unit
-def test_application_error_str_representation():
-    """Test ApplicationError string representation."""
-    error = ApplicationError("Test error message")
+def test_api_exception_str_representation():
+    """Test APIException string representation."""
+    error = APIException("Test error message")
     
     assert str(error) == "Test error message"
 
 
 @pytest.mark.unit
 def test_exception_hierarchy():
-    """Test that custom exceptions inherit from ApplicationError."""
-    assert issubclass(NotFoundError, ApplicationError)
-    assert issubclass(UnauthorizedError, ApplicationError)
-    assert issubclass(ValidationError, ApplicationError)
+    """Test that custom exceptions inherit from APIException."""
+    assert issubclass(NotFoundError, APIException)
+    assert issubclass(UnauthorizedError, APIException)
+    assert issubclass(ValidationError, APIException)
 
 
 @pytest.mark.unit

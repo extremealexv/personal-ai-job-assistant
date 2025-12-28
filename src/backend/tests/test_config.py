@@ -53,20 +53,20 @@ def test_settings_secret_key_min_length():
             database_url="postgresql://user:pass@localhost/db",
             database_async_url="postgresql+asyncpg://user:pass@localhost/db",
             secret_key="short",
-            encryption_key="test-encryption-key-min-32-chars!\",
+            encryption_key="test-encryption-key-min-32-chars!",
             openai_api_key="test-key",
         )
 
 
 @pytest.mark.unit
 def test_settings_debug_mode():
-    \"\"\"Test debug mode setting.\"\"\"
+    """Test debug mode setting."""
     test_settings = Settings(
-        database_url=\"postgresql://user:pass@localhost/db\",
-        database_async_url=\"postgresql+asyncpg://user:pass@localhost/db\",
-        secret_key=\"test-secret-key-min-32-chars-long!\",
-        encryption_key=\"test-encryption-key-min-32-chars!\",
-        openai_api_key=\"test-key\",
+        database_url="postgresql://user:pass@localhost/db",
+        database_async_url="postgresql+asyncpg://user:pass@localhost/db",
+        secret_key="test-secret-key-min-32-chars-long!",
+        encryption_key="test-encryption-key-min-32-chars!",
+        openai_api_key="test-key",
         debug=True,
     )
     
@@ -75,47 +75,47 @@ def test_settings_debug_mode():
 
 @pytest.mark.unit
 def test_settings_api_version():
-    \"\"\"Test API version string.\"\"\"
+    """Test API version string."""
     test_settings = Settings(
-        database_url=\"postgresql://user:pass@localhost/db\",
-        database_async_url=\"postgresql+asyncpg://user:pass@localhost/db\",
-        secret_key=\"test-secret-key-min-32-chars-long!\",
-        encryption_key=\"test-encryption-key-min-32-chars!\",
-        openai_api_key=\"test-key\",
-        api_v1_str=\"/api/v2\",
+        database_url="postgresql://user:pass@localhost/db",
+        database_async_url="postgresql+asyncpg://user:pass@localhost/db",
+        secret_key="test-secret-key-min-32-chars-long!",
+        encryption_key="test-encryption-key-min-32-chars!",
+        openai_api_key="test-key",
+        api_v1_str="/api/v2",
     )
     
-    assert test_settings.api_v1_str == \"/api/v2\"
+    assert test_settings.api_v1_str == "/api/v2"
 
 
 @pytest.mark.unit
 def test_settings_project_name():
-    \"\"\"Test project name configuration.\"\"\"
+    """Test project name configuration."""
     test_settings = Settings(
-        database_url=\"postgresql://user:pass@localhost/db\",
-        database_async_url=\"postgresql+asyncpg://user:pass@localhost/db\",
-        secret_key=\"test-secret-key-min-32-chars-long!\",
-        encryption_key=\"test-encryption-key-min-32-chars!\",
-        openai_api_key=\"test-key\",
-        project_name=\"Custom Project Name\",
+        database_url="postgresql://user:pass@localhost/db",
+        database_async_url="postgresql+asyncpg://user:pass@localhost/db",
+        secret_key="test-secret-key-min-32-chars-long!",
+        encryption_key="test-encryption-key-min-32-chars!",
+        openai_api_key="test-key",
+        project_name="Custom Project Name",
     )
     
-    assert test_settings.project_name == \"Custom Project Name\"
+    assert test_settings.project_name == "Custom Project Name"
 
 
 @pytest.mark.unit
 def test_settings_version():
-    \"\"\"Test version configuration.\"\"\"
+    """Test version configuration."""
     test_settings = Settings(
-        database_url=\"postgresql://user:pass@localhost/db\",
-        database_async_url=\"postgresql+asyncpg://user:pass@localhost/db\",
-        secret_key=\"test-secret-key-min-32-chars-long!\",
-        encryption_key=\"test-encryption-key-min-32-chars!\",
-        openai_api_key=\"test-key\",
-        version=\"1.0.0\",
+        database_url="postgresql://user:pass@localhost/db",
+        database_async_url="postgresql+asyncpg://user:pass@localhost/db",
+        secret_key="test-secret-key-min-32-chars-long!",
+        encryption_key="test-encryption-key-min-32-chars!",
+        openai_api_key="test-key",
+        version="1.0.0",
     )
     
-    assert test_settings.version == \"1.0.0\"
+    assert test_settings.version == "1.0.0"
 
 
 @pytest.mark.unit
@@ -145,7 +145,7 @@ def test_settings_database_url_format():
         database_url="postgresql://user:pass@localhost:5432/db",
         database_async_url="postgresql+asyncpg://user:pass@localhost:5432/db",
         secret_key="test-secret-key-min-32-chars-long!",
-        encryption_key="test-encryption-key-min-32-chars!\",
+        encryption_key="test-encryption-key-min-32-chars!",
         openai_api_key="test-key",
     )
     
@@ -154,11 +154,11 @@ def test_settings_database_url_format():
 
 @pytest.mark.unit
 def test_settings_has_required_fields():
-    \"\"\"Test that loaded settings has all required fields.\"\"\"
-    assert hasattr(settings, \"database_url\")
-    assert hasattr(settings, \"database_async_url\")
-    assert hasattr(settings, \"secret_key\")
-    assert hasattr(settings, \"project_name\")
-    assert hasattr(settings, \"version\")
-    assert hasattr(settings, \"api_v1_str\")
+    """Test that loaded settings has all required fields."""
+    assert hasattr(settings, "database_url")
+    assert hasattr(settings, "database_async_url")
+    assert hasattr(settings, "secret_key")
+    assert hasattr(settings, "project_name")
+    assert hasattr(settings, "version")
+    assert hasattr(settings, "api_v1_str")
 

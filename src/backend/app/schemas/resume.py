@@ -275,6 +275,13 @@ class ResumeVersionResponse(ResumeVersionBase, BaseResponse):
     response_rate: Optional[Decimal] = None
 
 
+class ResumeVersionListResponse(BaseSchema):
+    """Schema for paginated resume version list response."""
+
+    items: list[ResumeVersionResponse]
+    total: int
+
+
 # ============================================================================
 # File Upload
 # ============================================================================

@@ -13,6 +13,7 @@ from app.models.resume import (
     Certification,
     Education,
     MasterResume,
+    ResumeVersion,
     Skill,
     WorkExperience,
 )
@@ -28,6 +29,10 @@ from app.schemas.resume import (
     EducationUpdate,
     MasterResumeResponse,
     ResumeUploadResponse,
+    ResumeVersionCreate,
+    ResumeVersionListResponse,
+    ResumeVersionResponse,
+    ResumeVersionUpdate,
     SkillCreate,
     SkillListResponse,
     SkillResponse,
@@ -899,3 +904,242 @@ async def delete_certification(
 
     await db.delete(certification)
     await db.commit()
+
+
+# ============================================================================
+# Phase 3: Resume Versions
+# ============================================================================
+
+
+@router.post(
+    "/versions",
+    response_model=ResumeVersionResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create resume version",
+)
+async def create_resume_version(
+    version_data: ResumeVersionCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ResumeVersion:
+    """Create a new tailored resume version."""
+    # Verify master resume exists and user owns it
+    stmt = select(MasterResume).where(
+        MasterResume.id == version_data.master_resume_id,
+        MasterResume.user_id == current_user.id,
+        MasterResume.deleted_at.is_(None),
+    )
+    result = await db.execute(stmt)
+    master_resume = result.scalar_one_or_none()
+
+    if not master_resume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Master resume not found.",
+        )
+
+    # Create resume version
+    resume_version = ResumeVersion(
+        master_resume_id=version_data.master_resume_id,
+        job_posting_id=version_data.job_posting_id,
+        version_name=version_data.version_name,
+        target_role=version_data.target_role,
+        target_company=version_data.target_company,
+        modifications=version_data.modifications,
+        prompt_template_id=version_data.prompt_template_id,
+        ai_model_used=version_data.ai_model_used,
+        generation_timestamp=datetime.now(timezone.utc),
+    )
+
+    db.add(resume_version)
+    await db.commit()
+    await db.refresh(resume_version)
+
+    return resume_version
+
+
+@router.get(
+    "/versions",
+    response_model=ResumeVersionListResponse,
+    summary="List resume versions",
+)
+async def list_resume_versions(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ResumeVersionListResponse:
+    """Get all resume versions for the user's master resume."""
+    # Get user's master resume
+    stmt_master = select(MasterResume).where(
+        MasterResume.user_id == current_user.id,
+        MasterResume.deleted_at.is_(None),
+    )
+    result_master = await db.execute(stmt_master)
+    master_resume = result_master.scalar_one_or_none()
+
+    if not master_resume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Master resume not found.",
+        )
+
+    # Get all resume versions
+    stmt = (
+        select(ResumeVersion)
+        .where(
+            ResumeVersion.master_resume_id == master_resume.id,
+            ResumeVersion.deleted_at.is_(None),
+        )
+        .order_by(ResumeVersion.created_at.desc())
+    )
+    result = await db.execute(stmt)
+    versions = result.scalars().all()
+
+    return ResumeVersionListResponse(
+        items=list(versions),
+        total=len(versions),
+    )
+
+
+@router.get(
+    "/versions/{version_id}",
+    response_model=ResumeVersionResponse,
+    summary="Get resume version",
+)
+async def get_resume_version(
+    version_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ResumeVersion:
+    """Get a specific resume version by ID."""
+    # Get version and verify ownership
+    stmt = (
+        select(ResumeVersion)
+        .join(MasterResume)
+        .where(
+            ResumeVersion.id == version_id,
+            MasterResume.user_id == current_user.id,
+            ResumeVersion.deleted_at.is_(None),
+            MasterResume.deleted_at.is_(None),
+        )
+    )
+    result = await db.execute(stmt)
+    version = result.scalar_one_or_none()
+
+    if not version:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume version not found.",
+        )
+
+    return version
+
+
+@router.put(
+    "/versions/{version_id}",
+    response_model=ResumeVersionResponse,
+    summary="Update resume version",
+)
+async def update_resume_version(
+    version_id: UUID,
+    version_data: ResumeVersionUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ResumeVersion:
+    """Update a resume version."""
+    # Get version and verify ownership
+    stmt = (
+        select(ResumeVersion)
+        .join(MasterResume)
+        .where(
+            ResumeVersion.id == version_id,
+            MasterResume.user_id == current_user.id,
+            ResumeVersion.deleted_at.is_(None),
+            MasterResume.deleted_at.is_(None),
+        )
+    )
+    result = await db.execute(stmt)
+    version = result.scalar_one_or_none()
+
+    if not version:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume version not found.",
+        )
+
+    # Update fields
+    update_data = version_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(version, field, value)
+
+    await db.commit()
+    await db.refresh(version)
+
+    return version
+
+
+@router.delete(
+    "/versions/{version_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete resume version",
+)
+async def delete_resume_version(
+    version_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> None:
+    """Delete a resume version (soft delete)."""
+    # Get version and verify ownership
+    stmt = (
+        select(ResumeVersion)
+        .join(MasterResume)
+        .where(
+            ResumeVersion.id == version_id,
+            MasterResume.user_id == current_user.id,
+            ResumeVersion.deleted_at.is_(None),
+            MasterResume.deleted_at.is_(None),
+        )
+    )
+    result = await db.execute(stmt)
+    version = result.scalar_one_or_none()
+
+    if not version:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume version not found.",
+        )
+
+    # Soft delete
+    version.deleted_at = datetime.now(timezone.utc)
+    await db.commit()
+
+
+@router.get(
+    "/versions/job/{job_posting_id}",
+    response_model=ResumeVersionListResponse,
+    summary="Get resume versions for job posting",
+)
+async def get_resume_versions_for_job(
+    job_posting_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ResumeVersionListResponse:
+    """Get all resume versions associated with a specific job posting."""
+    # Get versions for this job
+    stmt = (
+        select(ResumeVersion)
+        .join(MasterResume)
+        .where(
+            ResumeVersion.job_posting_id == job_posting_id,
+            MasterResume.user_id == current_user.id,
+            ResumeVersion.deleted_at.is_(None),
+            MasterResume.deleted_at.is_(None),
+        )
+        .order_by(ResumeVersion.created_at.desc())
+    )
+    result = await db.execute(stmt)
+    versions = result.scalars().all()
+
+    return ResumeVersionListResponse(
+        items=list(versions),
+        total=len(versions),
+    )

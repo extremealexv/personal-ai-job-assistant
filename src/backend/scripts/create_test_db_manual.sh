@@ -34,10 +34,16 @@ echo "📦 Creating database..."
 sudo -u postgres psql -c "CREATE DATABASE \"$TEST_DB_NAME\" OWNER $DB_USER;"
 echo "✅ Created database: $TEST_DB_NAME"
 
-# Grant privileges
-echo "🔑 Granting privileges..."
+# Grant privileges on database
+echo "🔑 Granting database privileges..."
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE \"$TEST_DB_NAME\" TO $DB_USER;"
-echo "✅ Granted privileges"
+echo "✅ Granted database privileges"
+
+# Grant privileges on schema public
+echo "🔑 Granting schema privileges..."
+sudo -u postgres psql -d "$TEST_DB_NAME" -c "GRANT ALL ON SCHEMA public TO $DB_USER;"
+sudo -u postgres psql -d "$TEST_DB_NAME" -c "GRANT CREATE ON SCHEMA public TO $DB_USER;"
+echo "✅ Granted schema privileges"
 
 echo ""
 echo "🎉 Test database created successfully!"

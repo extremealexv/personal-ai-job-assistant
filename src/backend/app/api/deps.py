@@ -47,9 +47,10 @@ async def get_current_user(
     
     try:
         payload = decode_access_token(token)
-        user_id: str = payload.get("sub")
+        # Try user_id first (for test tokens), fall back to sub
+        user_id_str: str = payload.get("user_id") or payload.get("sub")
         
-        if user_id is None:
+        if user_id_str is None:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Could not validate credentials"
@@ -62,6 +63,16 @@ async def get_current_user(
     
     # Get user from database
     from sqlalchemy import select
+    from uuid import UUID
+    
+    # Convert string to UUID
+    try:
+        user_id = UUID(user_id_str)
+    except (ValueError, AttributeError):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid user ID format"
+        )
     
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()

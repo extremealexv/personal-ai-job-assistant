@@ -2,7 +2,7 @@
 # Test script for Resume Management Phase 1 endpoints
 # Tests: Upload, Get, Delete resume
 
-set -e  # Exit on error
+# Note: We don't use 'set -e' because we want to continue testing even if some tests fail
 
 # Configuration
 BASE_URL="http://localhost:8000/api/v1"

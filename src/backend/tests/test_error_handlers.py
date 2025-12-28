@@ -49,9 +49,10 @@ def test_validation_error_response_format():
 @pytest.mark.unit
 def test_not_found_error_response_format():
     """Test NotFoundError has correct properties."""
-    error = NotFoundError("User not found")
+    error = NotFoundError(resource="User", resource_id="123")
     
-    assert error.message == "User not found"
+    assert "User" in error.message
+    assert "123" in error.message
     assert error.status_code == status.HTTP_404_NOT_FOUND
 
 

@@ -68,7 +68,8 @@ class TestSearch:
         assert response.status_code == 200
         result = response.json()
         assert result["total_results"] > 0
-        assert result["master_resume"] is not None
+        assert len(result["skills"]) > 0
+        assert any(skill["skill_name"] == "Python" for skill in result["skills"])
 
     @pytest.mark.asyncio
     async def test_search_by_company(

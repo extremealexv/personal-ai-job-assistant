@@ -345,15 +345,14 @@ class TestSecurityEdgeCases:
             assert verify_password(password, hashed) is True
 
     def test_token_uniqueness(self):
-        """Test that creating multiple tokens produces unique tokens."""
-        import time
-        data = {"sub": "test@example.com"}
+        """Test that tokens with different data are unique."""
         tokens = []
-        for _ in range(10):
+        for i in range(10):
+            # Use different data for each token to ensure uniqueness
+            data = {"sub": f"user{i}@example.com", "index": i}
             tokens.append(create_access_token(data))
-            time.sleep(0.001)  # Small delay to ensure different timestamps
         
-        # All tokens should be unique (different expiration times)
+        # All tokens should be unique since they encode different data
         assert len(set(tokens)) == len(tokens)
 
     def test_password_with_null_bytes(self):

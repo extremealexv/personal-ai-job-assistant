@@ -1,6 +1,7 @@
 """Integration tests for authentication endpoints."""
 
 from datetime import datetime, timedelta, timezone
+import uuid
 
 import pytest
 from fastapi import status
@@ -19,9 +20,10 @@ from app.models.user import User
 
 @pytest.fixture
 async def test_user_data() -> dict:
-    """Test user registration data."""
+    """Test user registration data with unique email."""
+    unique_id = str(uuid.uuid4())[:8]
     return {
-        "email": "testuser@example.com",
+        "email": f"testuser-{unique_id}@example.com",
         "password": "SecurePass123!",
         "full_name": "Test User",
     }
@@ -29,9 +31,10 @@ async def test_user_data() -> dict:
 
 @pytest.fixture
 async def existing_user(db_session: AsyncSession) -> User:
-    """Create an existing user in the database."""
+    """Create an existing user in the database with unique email."""
+    unique_id = str(uuid.uuid4())[:8]
     user = User(
-        email="existing@example.com",
+        email=f"existing-{unique_id}@example.com",
         password_hash=get_password_hash("ExistingPass123!"),
         full_name="Existing User",
         is_active=True,
@@ -45,9 +48,10 @@ async def existing_user(db_session: AsyncSession) -> User:
 
 @pytest.fixture
 async def locked_user(db_session: AsyncSession) -> User:
-    """Create a locked user (account locked due to failed attempts)."""
+    """Create a locked user (account locked due to failed attempts) with unique email."""
+    unique_id = str(uuid.uuid4())[:8]
     user = User(
-        email="locked@example.com",
+        email=f"locked-{unique_id}@example.com",
         password_hash=get_password_hash("LockedPass123!"),
         full_name="Locked User",
         is_active=True,
@@ -62,9 +66,10 @@ async def locked_user(db_session: AsyncSession) -> User:
 
 @pytest.fixture
 async def inactive_user(db_session: AsyncSession) -> User:
-    """Create an inactive user."""
+    """Create an inactive user with unique email."""
+    unique_id = str(uuid.uuid4())[:8]
     user = User(
-        email="inactive@example.com",
+        email=f"inactive-{unique_id}@example.com",
         password_hash=get_password_hash("InactivePass123!"),
         full_name="Inactive User",
         is_active=False,

@@ -84,7 +84,7 @@ class TestMasterResumeRetrieval:
     ):
         """Test retrieving a master resume."""
         response = await async_client.get(
-            f"/api/v1/resumes/{uploaded_resume_id}",
+            "/api/v1/resumes/master",
             headers=auth_headers,
         )
 
@@ -96,10 +96,9 @@ class TestMasterResumeRetrieval:
     async def test_get_nonexistent_resume(
         self, async_client: AsyncClient, auth_headers: dict
     ):
-        """Test retrieving a non-existent resume returns 404."""
-        fake_id = "00000000-0000-0000-0000-000000000000"
+        """Test retrieving master resume when none exists returns 404."""
         response = await async_client.get(
-            f"/api/v1/resumes/{fake_id}",
+            "/api/v1/resumes/master",
             headers=auth_headers,
         )
 
@@ -116,7 +115,7 @@ class TestMasterResumeDeletion:
         """Test deleting a master resume."""
         # Delete
         response = await async_client.delete(
-            f"/api/v1/resumes/{uploaded_resume_id}",
+            "/api/v1/resumes/master",
             headers=auth_headers,
         )
 
@@ -124,7 +123,7 @@ class TestMasterResumeDeletion:
 
         # Verify it's gone
         get_response = await async_client.get(
-            f"/api/v1/resumes/{uploaded_resume_id}",
+            "/api/v1/resumes/master",
             headers=auth_headers,
         )
         assert get_response.status_code == 404

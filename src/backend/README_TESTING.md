@@ -6,12 +6,12 @@
 
 Before running tests for the first time, create the test database:
 
+#### Option A: Automated (if your DB user has CREATE DATABASE privileges)
+
 ```bash
 # From src/backend directory
 python scripts/setup_test_db.py
 ```
-
-This creates a separate `ai_job_assistant_test` database with the same schema as your development database.
 
 **Options:**
 - `--drop`: Drop and recreate the test database if it already exists
@@ -19,6 +19,30 @@ This creates a separate `ai_job_assistant_test` database with the same schema as
 ```bash
 python scripts/setup_test_db.py --drop
 ```
+
+#### Option B: Manual (if you get "permission denied" errors)
+
+If your database user doesn't have CREATE DATABASE privileges, create the database manually:
+
+```bash
+# Create database with superuser access
+sudo -u postgres psql -c 'CREATE DATABASE "ai_job_assistant_test" OWNER jsappuser'
+
+# Grant privileges
+sudo -u postgres psql -c 'GRANT ALL PRIVILEGES ON DATABASE "ai_job_assistant_test" TO jsappuser'
+
+# Then run the setup script to create tables
+python scripts/setup_test_db.py
+```
+
+**Or use the helper script:**
+
+```bash
+bash scripts/create_test_db_manual.sh
+python scripts/setup_test_db.py
+```
+
+This creates a separate `ai_job_assistant_test` database with the same schema as your development database.
 
 ### 2. Run Tests
 

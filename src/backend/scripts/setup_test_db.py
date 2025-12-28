@@ -60,17 +60,26 @@ async def setup_test_database(drop_existing: bool = False) -> None:
                 if drop_existing:
                     print(f"🗑️  Dropping existing database: {test_db_name}")
                     # Terminate existing connections
-                    await conn.execute(
-                        text(
-                            "SELECT pg_terminate_backend(pg_stat_activity.pid) "
-                            "FROM pg_stat_activity "
-                            "WHERE pg_stat_activity.datname = :db_name "
-                            "AND pid <> pg_backend_pid()"
-                        ),
-                        {"db_name": test_db_name}
-                    )
-                    await conn.execute(text(f'DROP DATABASE "{test_db_name}"'))
-                    print(f"✅ Dropped database: {test_db_name}")
+                    try:
+                        await conn.execute(
+                            text(
+                                "SELECT pg_terminate_backend(pg_stat_activity.pid) "
+                                "FROM pg_stat_activity "
+                                "WHERE pg_stat_activity.datname = :db_name "
+                                "AND pid <> pg_backend_pid()"
+                            ),
+                            {"db_name": test_db_name}
+                        )
+                        await conn.execute(text(f'DROP DATABASE "{test_db_name}"'))
+                        print(f"✅ Dropped database: {test_db_name}")
+                    except Exception as e:
+                        if "permission denied" in str(e).lower():
+                            print(f"\n❌ Permission denied. You need superuser access to drop databases.")
+                            print(f"\nRun this command manually:")
+                            print(f"  sudo -u postgres psql -c 'DROP DATABASE \"{test_db_name}\"'")
+                            await engine.dispose()
+                            sys.exit(1)
+                        raise
                 else:
                     print(f"ℹ️  Database already exists: {test_db_name}")
                     print("   Use --drop to recreate it")
@@ -79,8 +88,18 @@ async def setup_test_database(drop_existing: bool = False) -> None:
             
             # Create database
             print(f"📦 Creating database: {test_db_name}")
-            await conn.execute(text(f'CREATE DATABASE "{test_db_name}"'))
-            print(f"✅ Created database: {test_db_name}")
+            try:
+                await conn.execute(text(f'CREATE DATABASE "{test_db_name}"'))
+                print(f"✅ Created database: {test_db_name}")
+            except Exception as e:
+                if "permission denied" in str(e).lower():
+                    print(f"\n❌ Permission denied. Your database user doesn't have CREATE DATABASE privileges.")
+                    print(f"\nPlease create the database manually with superuser access:")
+                    print(f"  sudo -u postgres psql -c 'CREATE DATABASE \"{test_db_name}\" OWNER jsappuser'")
+                    print(f"\nThen run this script again.")
+                    await engine.dispose()
+                    sys.exit(1)
+                raise
     
     finally:
         await engine.dispose()
@@ -94,8 +113,19 @@ async def setup_test_database(drop_existing: bool = False) -> None:
     )
     
     try:
-        async with test_engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+        try:
+            async with test_engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+        except Exception as e:
+            if "does not exist" in str(e):
+                print(f"\n❌ Database '{test_db_name}' doesn't exist.")
+                print(f"\nCreate it manually with:")
+                print(f"  sudo -u postgres psql -c 'CREATE DATABASE \"{test_db_name}\" OWNER jsappuser'")
+                print(f"\nOr run:")
+                print(f"  bash scripts/create_test_db_manual.sh")
+                await test_engine.dispose()
+                sys.exit(1)
+            raise
         
         # Verify tables were created
         async with test_engine.connect() as conn:

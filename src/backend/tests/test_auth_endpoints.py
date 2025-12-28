@@ -387,9 +387,10 @@ class TestLogin:
         self, async_client: AsyncClient, db_session: AsyncSession
     ):
         """Test that account is locked after 5 failed login attempts."""
-        # Create user
+        # Create user with unique email to avoid conflicts with previous test runs
+        unique_id = str(uuid.uuid4())[:8]
         user = User(
-            email="locktest@example.com",
+            email=f"locktest-{unique_id}@example.com",
             password_hash=get_password_hash("CorrectPass123!"),
             full_name="Lock Test User",
         )

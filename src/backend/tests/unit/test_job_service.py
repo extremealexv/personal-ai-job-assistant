@@ -130,7 +130,7 @@ class TestJobServiceCRUD:
         job = await JobService.update_job_posting(
             db_session,
             sample_job_posting["id"],
-            test_user["id"],
+            test_user.id,
             update_data
         )
         
@@ -314,6 +314,6 @@ class TestJobServiceStats:
         
         assert stats.total_jobs == 5
         assert len(stats.by_status) > 0
-        assert stats.by_status.get("saved") == 2
+        assert stats.by_status.get("JobStatus.SAVED") == 2
         assert stats.avg_interest_level == 3.0  # (5+4+3+2+1)/5
         assert stats.recent_jobs_count == 5  # All created recently

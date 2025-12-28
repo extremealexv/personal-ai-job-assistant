@@ -48,7 +48,7 @@ async def database_health() -> DatabaseHealthResponse:
     connected = await check_db_connection()
     
     return DatabaseHealthResponse(
-        status="ok" if connected else="error",
+        status="ok" if connected else "error",
         connected=connected,
         message="Database connection successful" if connected else "Database connection failed",
     )

@@ -7,8 +7,24 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.config import settings
+from app.core.error_handlers import (
+    api_exception_handler,
+    general_exception_handler,
+    integrity_error_handler,
+    sqlalchemy_error_handler,
+    validation_exception_handler,
+)
+from app.core.exceptions import APIException
+from app.core.logging import setup_logging
+from app.core.middleware import (
+    RequestIDMiddleware,
+    RequestLoggingMiddleware,
+    SecurityHeadersMiddleware,
+)
+from app.db import check_db_connection
 
 
 @asynccontextmanager
@@ -16,18 +32,22 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan handler for startup and shutdown events.
     
     This function handles initialization and cleanup:
-    - Startup: Initialize database connections, Redis, etc.
+    - Startup: Initialize database connections, logging, etc.
     - Shutdown: Close connections gracefully
     """
     # Startup logic
+    setup_logging()
     print("🚀 Starting Personal AI Job Assistant API...")
     print(f"📍 Environment: {settings.app_env}")
     print(f"🔧 Debug mode: {settings.debug}")
     print(f"📦 Upload directory: {settings.upload_dir}")
     
-    # TODO: Initialize database connection pool
-    # TODO: Initialize Redis connection
-    # TODO: Initialize AI service clients
+    # Check database connection
+    db_connected = await check_db_connection()
+    if db_connected:
+        print("✅ Database connection successful")
+    else:
+        print("❌ Database connection failed")
     
     yield
     
@@ -59,48 +79,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# Global exception handlers
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
-    """Handle validation errors with detailed error messages."""
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={
-            "detail": exc.errors(),
-            "message": "Validation error",
-            "path": str(request.url),
-        },
-    )
+# Add custom middleware (order matters - last added is executed first)
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(RequestIDMiddleware)
 
 
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Handle uncaught exceptions."""
-    # Log the error (TODO: integrate with proper logging)
-    print(f"❌ Unhandled exception: {exc}")
-    
-    # Don't expose internal errors in production
-    if settings.is_production:
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={
-                "detail": "Internal server error",
-                "message": "An unexpected error occurred",
-            },
-        )
-    
-    # Show detailed errors in development
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={
-            "detail": str(exc),
-            "message": "Internal server error",
-            "type": type(exc).__name__,
-        },
-    )
+# Global exception handlers - use new centralized handlers
+app.add_exception_handler(APIException, api_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(IntegrityError, integrity_error_handler)
+app.add_exception_handler(SQLAlchemyError, sqlalchemy_error_handler)
+app.add_exception_handler(Exception, general_exception_handler)
 
 
 # Root endpoint

@@ -23,7 +23,8 @@ class TestMasterResumeUpload:
         assert response.status_code == 201
         result = response.json()
         assert "id" in result
-        assert result["original_filename"] == "resume.pdf"
+        assert result["filename"] == "resume.pdf"
+        assert result["status"] == "completed"
 
     @pytest.mark.asyncio
     async def test_upload_without_auth(
@@ -37,6 +38,7 @@ class TestMasterResumeUpload:
         )
 
         assert response.status_code == 401
+        assert "detail" in response.json()
 
     @pytest.mark.asyncio
     async def test_upload_invalid_file_type(

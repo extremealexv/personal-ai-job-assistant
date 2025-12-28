@@ -1143,3 +1143,291 @@ async def get_resume_versions_for_job(
         items=list(versions),
         total=len(versions),
     )
+
+
+# ============================================================================
+# Phase 4: Advanced Features
+# ============================================================================
+
+
+@router.get(
+    "/search",
+    response_model=dict,
+    summary="Search resumes",
+)
+async def search_resumes(
+    q: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    """Search across master resume and all structured data."""
+    # Get user's master resume
+    stmt_master = select(MasterResume).where(
+        MasterResume.user_id == current_user.id,
+        MasterResume.deleted_at.is_(None),
+    )
+    result_master = await db.execute(stmt_master)
+    master_resume = result_master.scalar_one_or_none()
+
+    if not master_resume:
+        return {
+            "master_resume": None,
+            "work_experiences": [],
+            "education": [],
+            "skills": [],
+            "certifications": [],
+            "resume_versions": [],
+            "total_results": 0,
+        }
+
+    search_term = f"%{q.lower()}%"
+    results = {
+        "master_resume": None,
+        "work_experiences": [],
+        "education": [],
+        "skills": [],
+        "certifications": [],
+        "resume_versions": [],
+        "total_results": 0,
+    }
+
+    # Search in master resume
+    if (
+        master_resume.full_name and q.lower() in master_resume.full_name.lower()
+    ) or (master_resume.summary and q.lower() in master_resume.summary.lower()):
+        results["master_resume"] = master_resume
+        results["total_results"] += 1
+
+    # Search work experiences
+    stmt_work = (
+        select(WorkExperience)
+        .where(
+            WorkExperience.master_resume_id == master_resume.id,
+        )
+        .where(
+            (WorkExperience.company_name.ilike(search_term))
+            | (WorkExperience.job_title.ilike(search_term))
+            | (WorkExperience.description.ilike(search_term))
+        )
+    )
+    result_work = await db.execute(stmt_work)
+    work_matches = result_work.scalars().all()
+    results["work_experiences"] = list(work_matches)
+    results["total_results"] += len(work_matches)
+
+    # Search education
+    stmt_edu = (
+        select(Education)
+        .where(
+            Education.master_resume_id == master_resume.id,
+        )
+        .where(
+            (Education.institution.ilike(search_term))
+            | (Education.field_of_study.ilike(search_term))
+        )
+    )
+    result_edu = await db.execute(stmt_edu)
+    edu_matches = result_edu.scalars().all()
+    results["education"] = list(edu_matches)
+    results["total_results"] += len(edu_matches)
+
+    # Search skills
+    stmt_skill = (
+        select(Skill)
+        .where(
+            Skill.master_resume_id == master_resume.id,
+        )
+        .where(Skill.skill_name.ilike(search_term))
+    )
+    result_skill = await db.execute(stmt_skill)
+    skill_matches = result_skill.scalars().all()
+    results["skills"] = list(skill_matches)
+    results["total_results"] += len(skill_matches)
+
+    # Search certifications
+    stmt_cert = (
+        select(Certification)
+        .where(
+            Certification.master_resume_id == master_resume.id,
+        )
+        .where(
+            (Certification.certification_name.ilike(search_term))
+            | (Certification.issuing_organization.ilike(search_term))
+        )
+    )
+    result_cert = await db.execute(stmt_cert)
+    cert_matches = result_cert.scalars().all()
+    results["certifications"] = list(cert_matches)
+    results["total_results"] += len(cert_matches)
+
+    # Search resume versions
+    stmt_version = (
+        select(ResumeVersion)
+        .where(
+            ResumeVersion.master_resume_id == master_resume.id,
+            ResumeVersion.deleted_at.is_(None),
+        )
+        .where(
+            (ResumeVersion.version_name.ilike(search_term))
+            | (ResumeVersion.target_role.ilike(search_term))
+            | (ResumeVersion.target_company.ilike(search_term))
+        )
+    )
+    result_version = await db.execute(stmt_version)
+    version_matches = result_version.scalars().all()
+    results["resume_versions"] = list(version_matches)
+    results["total_results"] += len(version_matches)
+
+    return results
+
+
+@router.get(
+    "/stats",
+    response_model=dict,
+    summary="Get resume statistics",
+)
+async def get_resume_stats(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    """Get comprehensive statistics about resume data."""
+    # Get user's master resume
+    stmt_master = select(MasterResume).where(
+        MasterResume.user_id == current_user.id,
+        MasterResume.deleted_at.is_(None),
+    )
+    result_master = await db.execute(stmt_master)
+    master_resume = result_master.scalar_one_or_none()
+
+    if not master_resume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Master resume not found.",
+        )
+
+    # Count structured data
+    stmt_work = select(WorkExperience).where(
+        WorkExperience.master_resume_id == master_resume.id
+    )
+    result_work = await db.execute(stmt_work)
+    work_count = len(result_work.scalars().all())
+
+    stmt_edu = select(Education).where(Education.master_resume_id == master_resume.id)
+    result_edu = await db.execute(stmt_edu)
+    edu_count = len(result_edu.scalars().all())
+
+    stmt_skill = select(Skill).where(Skill.master_resume_id == master_resume.id)
+    result_skill = await db.execute(stmt_skill)
+    skill_count = len(result_skill.scalars().all())
+
+    stmt_cert = select(Certification).where(
+        Certification.master_resume_id == master_resume.id
+    )
+    result_cert = await db.execute(stmt_cert)
+    cert_count = len(result_cert.scalars().all())
+
+    # Count resume versions
+    stmt_versions = select(ResumeVersion).where(
+        ResumeVersion.master_resume_id == master_resume.id,
+        ResumeVersion.deleted_at.is_(None),
+    )
+    result_versions = await db.execute(stmt_versions)
+    versions = result_versions.scalars().all()
+    version_count = len(versions)
+
+    # Calculate version statistics
+    total_times_used = sum(v.times_used for v in versions)
+    total_applications = sum(v.applications_count for v in versions)
+    avg_response_rate = (
+        sum(
+            float(v.response_rate) for v in versions if v.response_rate is not None
+        )
+        / len([v for v in versions if v.response_rate is not None])
+        if any(v.response_rate is not None for v in versions)
+        else 0.0
+    )
+
+    # Get most used version
+    most_used_version = None
+    if versions:
+        most_used = max(versions, key=lambda v: v.times_used)
+        if most_used.times_used > 0:
+            most_used_version = {
+                "id": str(most_used.id),
+                "version_name": most_used.version_name,
+                "times_used": most_used.times_used,
+                "applications_count": most_used.applications_count,
+                "response_rate": float(most_used.response_rate) if most_used.response_rate else None,
+            }
+
+    return {
+        "master_resume_id": str(master_resume.id),
+        "created_at": master_resume.created_at.isoformat(),
+        "structured_data": {
+            "work_experiences": work_count,
+            "education": edu_count,
+            "skills": skill_count,
+            "certifications": cert_count,
+        },
+        "resume_versions": {
+            "total_versions": version_count,
+            "total_times_used": total_times_used,
+            "total_applications": total_applications,
+            "avg_response_rate": round(avg_response_rate, 2),
+            "most_used_version": most_used_version,
+        },
+    }
+
+
+@router.post(
+    "/versions/{version_id}/duplicate",
+    response_model=ResumeVersionResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Duplicate resume version",
+)
+async def duplicate_resume_version(
+    version_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ResumeVersion:
+    """Create a copy of an existing resume version."""
+    # Get original version and verify ownership
+    stmt = (
+        select(ResumeVersion)
+        .join(MasterResume)
+        .where(
+            ResumeVersion.id == version_id,
+            MasterResume.user_id == current_user.id,
+            ResumeVersion.deleted_at.is_(None),
+            MasterResume.deleted_at.is_(None),
+        )
+    )
+    result = await db.execute(stmt)
+    original = result.scalar_one_or_none()
+
+    if not original:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume version not found.",
+        )
+
+    # Create duplicate
+    duplicate = ResumeVersion(
+        master_resume_id=original.master_resume_id,
+        job_posting_id=None,  # Don't copy job posting link
+        version_name=f"{original.version_name} (Copy)",
+        target_role=original.target_role,
+        target_company=original.target_company,
+        modifications=original.modifications.copy() if original.modifications else {},
+        prompt_template_id=original.prompt_template_id,
+        ai_model_used=original.ai_model_used,
+        generation_timestamp=datetime.now(timezone.utc),
+        pdf_file_path=None,  # Don't copy file paths
+        docx_file_path=None,
+    )
+
+    db.add(duplicate)
+    await db.commit()
+    await db.refresh(duplicate)
+
+    return duplicate

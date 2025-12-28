@@ -65,6 +65,15 @@ class Settings(BaseSettings):
     # Security & Encryption
     encryption_key: str = Field(..., description="Fernet encryption key for sensitive data")
 
+    # JWT Authentication
+    algorithm: str = Field(default="HS256", description="JWT signing algorithm")
+    access_token_expire_minutes: int = Field(
+        default=30, description="Access token expiration time in minutes"
+    )
+    refresh_token_expire_days: int = Field(
+        default=7, description="Refresh token expiration time in days"
+    )
+
     # AI Service Configuration
     openai_api_key: str = Field(..., description="OpenAI API key")
     openai_model: str = Field(default="gpt-4", description="Default OpenAI model")

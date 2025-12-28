@@ -153,12 +153,13 @@ async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, 
 
 @pytest.fixture
 async def test_user(db_session: AsyncSession):
-    """Create a test user."""
+    """Create a test user with properly hashed password."""
     from app.models.user import User
+    from app.core.security import get_password_hash
     
     user = User(
         email="test@example.com",
-        password_hash="hashed_password",  # TODO: Use proper password hashing
+        password_hash=get_password_hash("TestPassword123!"),
         full_name="Test User",
         is_active=True,
         email_verified=True,
@@ -172,12 +173,13 @@ async def test_user(db_session: AsyncSession):
 
 @pytest.fixture
 def auth_headers(test_user) -> dict[str, str]:
-    """Create authentication headers for test user.
+    """Create authentication headers for test user with JWT token."""
+    from app.core.security import create_access_token
     
-    TODO: Implement JWT token generation when auth is implemented.
-    """
-    # For now, return empty dict - will be populated when auth is implemented
-    return {}
+    access_token = create_access_token(
+        {"sub": test_user.email, "user_id": str(test_user.id)}
+    )
+    return {"Authorization": f"Bearer {access_token}"}
 
 
 # ============================================================================

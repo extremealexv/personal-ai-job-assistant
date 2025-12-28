@@ -22,15 +22,343 @@
 
 ## Authentication
 
-All endpoints except health checks and documentation require authentication.
+The API uses JWT (JSON Web Token) based authentication. Most endpoints require a valid access token.
+
+### Authentication Flow
+
+1. **Register** a new account → `POST /api/v1/auth/register`
+2. **Login** to get tokens → `POST /api/v1/auth/login`
+3. **Use access token** in Authorization header for protected endpoints
+4. **Refresh** access token when expired → `POST /api/v1/auth/refresh`
+
+### Token Types
+
+- **Access Token**: Short-lived (30 minutes), used for API requests
+- **Refresh Token**: Long-lived (7 days), used to obtain new access tokens
 
 ### Authentication Header
 
 ```http
-Authorization: Bearer <jwt_token>
+Authorization: Bearer <access_token>
 ```
 
-### Error Responses
+---
+
+### Register New User
+
+**POST** `/api/v1/auth/register`
+
+Create a new user account.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "SecurePass123!",
+  "full_name": "John Doe"
+}
+```
+
+**Password Requirements:**
+- Minimum 8 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one digit
+- At least one special character
+
+**Response 201:**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "user@example.com",
+  "full_name": "John Doe",
+  "is_active": true,
+  "email_verified": false,
+  "created_at": "2025-12-28T10:00:00Z"
+}
+```
+
+**Error 400 - Duplicate Email:**
+```json
+{
+  "detail": "Email already registered"
+}
+```
+
+**Error 422 - Weak Password:**
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "password"],
+      "msg": "Password must be at least 8 characters and contain uppercase, lowercase, digit, and special character",
+      "type": "value_error"
+    }
+  ]
+}
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com",
+    "password": "SecurePass123!",
+    "full_name": "John Doe"
+  }'
+```
+
+---
+
+### Login
+
+**POST** `/api/v1/auth/login`
+
+Authenticate user and receive access and refresh tokens.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "SecurePass123!"
+}
+```
+
+**Response 200:**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "expires_in": 1800
+}
+```
+
+**Error 401 - Invalid Credentials:**
+```json
+{
+  "detail": "Incorrect email or password"
+}
+```
+
+**Error 403 - Inactive Account:**
+```json
+{
+  "detail": "Account is inactive"
+}
+```
+
+**Error 423 - Account Locked:**
+```json
+{
+  "detail": "Account locked due to too many failed attempts. Try again in 14 minutes."
+}
+```
+
+**Security Features:**
+- Account locked for 15 minutes after 5 failed login attempts
+- Failed attempt counter resets on successful login
+- Last login timestamp updated on success
+
+**Example:**
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com",
+    "password": "SecurePass123!"
+  }'
+```
+
+---
+
+### Refresh Access Token
+
+**POST** `/api/v1/auth/refresh`
+
+Get a new access token using a valid refresh token.
+
+**Request Body:**
+```json
+{
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Response 200:**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "expires_in": 1800
+}
+```
+
+**Error 401 - Invalid Token:**
+```json
+{
+  "detail": "Invalid refresh token"
+}
+```
+
+**Error 401 - Wrong Token Type:**
+```json
+{
+  "detail": "Invalid token type"
+}
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }'
+```
+
+---
+
+### Get Current User Profile
+
+**GET** `/api/v1/auth/me`
+
+Get the authenticated user's profile information.
+
+**Authentication:** Required (Bearer token)
+
+**Response 200:**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "user@example.com",
+  "full_name": "John Doe",
+  "phone": null,
+  "location": null,
+  "is_active": true,
+  "email_verified": false,
+  "last_login": "2025-12-28T10:30:00Z",
+  "created_at": "2025-12-28T10:00:00Z"
+}
+```
+
+**Error 401 - No Token:**
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+**Error 401 - Invalid Token:**
+```json
+{
+  "detail": "Could not validate credentials"
+}
+```
+
+**Example:**
+```bash
+curl http://localhost:8000/api/v1/auth/me \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+---
+
+### Change Password
+
+**POST** `/api/v1/auth/change-password`
+
+Change the authenticated user's password.
+
+**Authentication:** Required (Bearer token)
+
+**Request Body:**
+```json
+{
+  "current_password": "OldPass123!",
+  "new_password": "NewSecurePass456!"
+}
+```
+
+**Response 200:**
+```json
+{
+  "message": "Password changed successfully"
+}
+```
+
+**Error 401 - Incorrect Current Password:**
+```json
+{
+  "detail": "Current password is incorrect"
+}
+```
+
+**Error 422 - Weak New Password:**
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "new_password"],
+      "msg": "Password must be at least 8 characters and contain uppercase, lowercase, digit, and special character",
+      "type": "value_error"
+    }
+  ]
+}
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/change-password \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "current_password": "OldPass123!",
+    "new_password": "NewSecurePass456!"
+  }'
+```
+
+---
+
+### Logout
+
+**POST** `/api/v1/auth/logout`
+
+Logout and invalidate tokens (placeholder - requires Redis for token blacklist).
+
+**Authentication:** Required (Bearer token)
+
+**Request Body:**
+```json
+{
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Response 200:**
+```json
+{
+  "message": "Logged out successfully"
+}
+```
+
+**Note:** Full implementation requires Redis for token blacklisting. Currently returns success but does not invalidate tokens.
+
+**Example:**
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/logout \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }'
+```
+
+---
+
+### Common Authentication Errors
 
 **401 Unauthorized:**
 ```json
@@ -38,6 +366,22 @@ Authorization: Bearer <jwt_token>
   "detail": "Not authenticated",
   "status_code": 401,
   "request_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**403 Forbidden:**
+```json
+{
+  "detail": "Account is inactive",
+  "status_code": 403
+}
+```
+
+**423 Locked:**
+```json
+{
+  "detail": "Account locked due to too many failed attempts. Try again in 15 minutes.",
+  "status_code": 423
 }
 ```
 

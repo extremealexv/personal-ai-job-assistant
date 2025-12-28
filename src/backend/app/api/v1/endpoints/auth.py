@@ -270,7 +270,6 @@ async def get_current_user_profile(
 
 @router.patch("/me", response_model=UserResponse)
 async def update_current_user_profile(
-    user_update: Annotated[dict, Depends()],
     current_user: Annotated[User, Depends(get_current_user)],
     db: AsyncSession = Depends(get_db),
 ) -> User:
@@ -279,19 +278,13 @@ async def update_current_user_profile(
     
     **Requires:** Valid access token
     
-    **Allowed fields:**
-    - full_name
-    - phone
-    - location
-    - linkedin_url
-    - github_url
-    - portfolio_url
+    **Note:** Full implementation coming soon. Currently returns user unchanged.
     
     **Returns:**
-    - Updated user object
+    - User object
     """
-    # TODO: Implement profile update logic
-    # This is a placeholder for future implementation
+    # TODO: Implement profile update with UserUpdate schema
+    # For now, just return the current user
     return current_user
 
 

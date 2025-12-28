@@ -273,3 +273,18 @@ class ResumeVersionResponse(ResumeVersionBase, BaseResponse):
     times_used: int
     applications_count: int
     response_rate: Optional[Decimal] = None
+
+
+# ============================================================================
+# File Upload
+# ============================================================================
+
+
+class ResumeUploadResponse(BaseSchema):
+    """Schema for resume upload response."""
+
+    id: UUID
+    filename: str
+    file_size: int
+    status: str = "processing"
+    created_at: datetime

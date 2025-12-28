@@ -303,8 +303,6 @@ async def create_work_experience(
         achievements=data.achievements,
         technologies=data.technologies,
         display_order=data.display_order,
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
     )
 
     db.add(work_exp)
@@ -350,8 +348,6 @@ async def update_work_experience(
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(work_exp, field, value)
-
-    work_exp.updated_at = datetime.now(timezone.utc)
 
     await db.commit()
     await db.refresh(work_exp)
@@ -480,8 +476,6 @@ async def create_education(
         honors=data.honors,
         activities=data.activities,
         display_order=data.display_order,
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
     )
 
     db.add(education)
@@ -527,8 +521,6 @@ async def update_education(
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(education, field, value)
-
-    education.updated_at = datetime.now(timezone.utc)
 
     await db.commit()
     await db.refresh(education)
@@ -652,7 +644,6 @@ async def create_skill(
         proficiency_level=data.proficiency_level,
         years_of_experience=data.years_of_experience,
         display_order=data.display_order,
-        created_at=datetime.now(timezone.utc),
     )
 
     db.add(skill)
@@ -823,7 +814,6 @@ async def create_certification(
         credential_id=data.credential_id,
         credential_url=data.credential_url,
         display_order=data.display_order,
-        created_at=datetime.now(timezone.utc),
     )
 
     db.add(certification)

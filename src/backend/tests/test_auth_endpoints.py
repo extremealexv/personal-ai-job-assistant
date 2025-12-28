@@ -393,9 +393,11 @@ class TestLogin:
             email=f"locktest-{unique_id}@example.com",
             password_hash=get_password_hash("CorrectPass123!"),
             full_name="Lock Test User",
+            failed_login_attempts=0,  # Explicitly set to 0 to ensure clean state
         )
         db_session.add(user)
         await db_session.commit()
+        await db_session.refresh(user)  # Refresh to get DB defaults
         
         login_data = {
             "email": user.email,

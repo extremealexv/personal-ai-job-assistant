@@ -73,3 +73,12 @@ class User(Base):
 
     def __repr__(self) -> str:
         return f"<User(email={self.email}, active={self.is_active})>"
+
+    def to_dict(self) -> dict:
+        """Convert user to dictionary, excluding sensitive fields."""
+        user_dict = {
+            column.name: getattr(self, column.name)
+            for column in self.__table__.columns
+            if column.name != "password_hash"
+        }
+        return user_dict

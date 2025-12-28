@@ -288,3 +288,36 @@ class ResumeUploadResponse(BaseSchema):
     file_size: int
     status: str = "processing"
     created_at: datetime
+
+
+# ============================================================================
+# List Responses (for CRUD endpoints)
+# ============================================================================
+
+
+class WorkExperienceListResponse(BaseSchema):
+    """Schema for work experience list response."""
+
+    items: list[WorkExperienceResponse]
+    total: int
+
+
+class EducationListResponse(BaseSchema):
+    """Schema for education list response."""
+
+    items: list[EducationResponse]
+    total: int
+
+
+class SkillListResponse(BaseSchema):
+    """Schema for skill list response."""
+
+    items: list[SkillResponse]
+    total: int
+
+
+class CertificationListResponse(BaseSchema):
+    """Schema for certification list response."""
+
+    items: list[CertificationResponse]
+    total: int

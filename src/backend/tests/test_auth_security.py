@@ -346,8 +346,12 @@ class TestSecurityEdgeCases:
 
     def test_token_uniqueness(self):
         """Test that creating multiple tokens produces unique tokens."""
+        import time
         data = {"sub": "test@example.com"}
-        tokens = [create_access_token(data) for _ in range(10)]
+        tokens = []
+        for _ in range(10):
+            tokens.append(create_access_token(data))
+            time.sleep(0.001)  # Small delay to ensure different timestamps
         
         # All tokens should be unique (different expiration times)
         assert len(set(tokens)) == len(tokens)
@@ -380,15 +384,26 @@ class TestSecurityEdgeCases:
         data = {"sub": "test@example.com", "user_id": "123"}
         token = create_access_token(data)
         
-        # Decode without verification to modify
-        unverified = jwt.decode(token, options={"verify_signature": False})
-        unverified["user_id"] = "456"  # Try to change user ID
+        # Decode and verify original token
+        payload = verify_token(token, "access")
+        assert payload["user_id"] == "123"
         
-        # Re-encode with same secret
-        modified_token = jwt.encode(unverified, settings.secret_key, algorithm=settings.algorithm)
+        # Try to manually modify the payload without proper signing
+        # Split token into parts
+        parts = token.split(".")
+        # Tamper with payload by modifying encoded data
+        import base64
+        import json
+        payload_decoded = json.loads(base64.urlsafe_b64decode(parts[1] + "===" ))
+        payload_decoded["user_id"] = "456"
+        tampered_payload = base64.urlsafe_b64encode(
+            json.dumps(payload_decoded).encode()
+        ).decode().rstrip("=")
+        tampered_token = f"{parts[0]}.{tampered_payload}.{parts[2]}"
         
-        # The modified token should have different signature
-        assert modified_token != token
+        # The tampered token should be rejected (invalid signature)
+        result = verify_token(tampered_token, "access")
+        assert result is None
 
 
 # ============================================================================

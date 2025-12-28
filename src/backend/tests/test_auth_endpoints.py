@@ -84,6 +84,8 @@ async def inactive_user(db_session: AsyncSession) -> User:
 class TestRegistration:
     """Test user registration endpoint."""
 
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_register_new_user_success(
         self, async_client: AsyncClient, test_user_data: dict, db_session: AsyncSession
     ):
@@ -110,6 +112,8 @@ class TestRegistration:
         assert user is not None
         assert user.email == test_user_data["email"]
 
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_register_duplicate_email(
         self, async_client: AsyncClient, existing_user: User
     ):
@@ -125,6 +129,8 @@ class TestRegistration:
         assert response.status_code == status.HTTP_409_CONFLICT
         assert "already registered" in response.json()["detail"].lower()
 
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_register_weak_password(self, async_client: AsyncClient):
         """Test that weak passwords are rejected."""
         weak_passwords = [
@@ -145,6 +151,8 @@ class TestRegistration:
             response = await async_client.post("/api/v1/auth/register", json=user_data)
             assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_register_invalid_email(self, async_client: AsyncClient):
         """Test that invalid email formats are rejected."""
         invalid_emails = [
@@ -164,6 +172,8 @@ class TestRegistration:
             response = await async_client.post("/api/v1/auth/register", json=user_data)
             assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_register_missing_required_fields(self, async_client: AsyncClient):
         """Test that missing required fields are rejected."""
         # Missing email
@@ -180,6 +190,8 @@ class TestRegistration:
         )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_register_password_is_hashed(
         self, async_client: AsyncClient, test_user_data: dict, db_session: AsyncSession
     ):
@@ -208,6 +220,8 @@ class TestRegistration:
 class TestLogin:
     """Test user login endpoint."""
 
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_login_success(self, async_client: AsyncClient, existing_user: User):
         """Test successful login."""
         login_data = {
@@ -232,6 +246,8 @@ class TestLogin:
         assert isinstance(data["refresh_token"], str)
         assert len(data["refresh_token"]) > 0
 
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_login_incorrect_password(
         self, async_client: AsyncClient, existing_user: User
     ):
@@ -246,6 +262,7 @@ class TestLogin:
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         assert "incorrect" in response.json()["detail"].lower()
 
+    @pytest.mark.asyncio
     async def test_login_nonexistent_user(self, async_client: AsyncClient):
         """Test login with non-existent email."""
         login_data = {
@@ -257,6 +274,7 @@ class TestLogin:
         
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
+    @pytest.mark.asyncio
     async def test_login_inactive_user(
         self, async_client: AsyncClient, inactive_user: User
     ):
@@ -271,6 +289,7 @@ class TestLogin:
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert "inactive" in response.json()["detail"].lower()
 
+    @pytest.mark.asyncio
     async def test_login_locked_account(
         self, async_client: AsyncClient, locked_user: User
     ):
@@ -285,6 +304,7 @@ class TestLogin:
         assert response.status_code == status.HTTP_423_LOCKED
         assert "locked" in response.json()["detail"].lower()
 
+    @pytest.mark.asyncio
     async def test_login_updates_last_login(
         self, async_client: AsyncClient, existing_user: User, db_session: AsyncSession
     ):
@@ -307,6 +327,7 @@ class TestLogin:
         if old_last_login:
             assert existing_user.last_login > old_last_login
 
+    @pytest.mark.asyncio
     async def test_login_resets_failed_attempts(
         self, async_client: AsyncClient, db_session: AsyncSession
     ):
@@ -335,6 +356,7 @@ class TestLogin:
         # Failed attempts should be reset
         assert user.failed_login_attempts == 0
 
+    @pytest.mark.asyncio
     async def test_login_increments_failed_attempts(
         self, async_client: AsyncClient, existing_user: User, db_session: AsyncSession
     ):
@@ -355,6 +377,7 @@ class TestLogin:
         # Failed attempts should be incremented
         assert existing_user.failed_login_attempts == initial_attempts + 1
 
+    @pytest.mark.asyncio
     async def test_login_locks_after_5_failures(
         self, async_client: AsyncClient, db_session: AsyncSession
     ):
@@ -399,6 +422,7 @@ class TestLogin:
 class TestTokenRefresh:
     """Test token refresh endpoint."""
 
+    @pytest.mark.asyncio
     async def test_refresh_token_success(
         self, async_client: AsyncClient, existing_user: User
     ):
@@ -422,6 +446,7 @@ class TestTokenRefresh:
         assert isinstance(data["access_token"], str)
         assert len(data["access_token"]) > 0
 
+    @pytest.mark.asyncio
     async def test_refresh_with_invalid_token(self, async_client: AsyncClient):
         """Test refresh with invalid token."""
         response = await async_client.post(
@@ -431,6 +456,7 @@ class TestTokenRefresh:
         
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
+    @pytest.mark.asyncio
     async def test_refresh_with_access_token(
         self, async_client: AsyncClient, existing_user: User
     ):
@@ -447,6 +473,7 @@ class TestTokenRefresh:
         
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
+    @pytest.mark.asyncio
     async def test_refresh_with_expired_token(
         self, async_client: AsyncClient, existing_user: User
     ):
@@ -482,6 +509,7 @@ class TestTokenRefresh:
 class TestProtectedEndpoints:
     """Test authentication-protected endpoints."""
 
+    @pytest.mark.asyncio
     async def test_get_current_user_with_valid_token(
         self, async_client: AsyncClient, existing_user: User
     ):
@@ -504,12 +532,14 @@ class TestProtectedEndpoints:
         assert "password" not in data
         assert "password_hash" not in data
 
+    @pytest.mark.asyncio
     async def test_get_current_user_without_token(self, async_client: AsyncClient):
         """Test that protected endpoints reject requests without tokens."""
         response = await async_client.get("/api/v1/auth/me")
         
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
+    @pytest.mark.asyncio
     async def test_get_current_user_with_invalid_token(self, async_client: AsyncClient):
         """Test that protected endpoints reject invalid tokens."""
         response = await async_client.get(
@@ -519,6 +549,7 @@ class TestProtectedEndpoints:
         
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
+    @pytest.mark.asyncio
     async def test_get_current_user_with_expired_token(
         self, async_client: AsyncClient, existing_user: User
     ):
@@ -553,6 +584,7 @@ class TestProtectedEndpoints:
 class TestPasswordChange:
     """Test password change endpoint."""
 
+    @pytest.mark.asyncio
     async def test_change_password_success(
         self, async_client: AsyncClient, existing_user: User, db_session: AsyncSession
     ):
@@ -581,6 +613,7 @@ class TestPasswordChange:
         # Password hash should have changed
         assert existing_user.password_hash != old_password_hash
 
+    @pytest.mark.asyncio
     async def test_change_password_incorrect_current(
         self, async_client: AsyncClient, existing_user: User
     ):
@@ -600,6 +633,7 @@ class TestPasswordChange:
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
+    @pytest.mark.asyncio
     async def test_change_password_weak_new_password(
         self, async_client: AsyncClient, existing_user: User
     ):
@@ -619,6 +653,7 @@ class TestPasswordChange:
         
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
+    @pytest.mark.asyncio
     async def test_change_password_requires_authentication(
         self, async_client: AsyncClient
     ):
@@ -643,6 +678,7 @@ class TestPasswordChange:
 class TestLogout:
     """Test logout endpoint."""
 
+    @pytest.mark.asyncio
     async def test_logout_success(
         self, async_client: AsyncClient, existing_user: User
     ):
@@ -663,6 +699,7 @@ class TestLogout:
         assert response.status_code == status.HTTP_200_OK
         assert "message" in response.json()
 
+    @pytest.mark.asyncio
     async def test_logout_requires_authentication(self, async_client: AsyncClient):
         """Test that logout requires authentication."""
         response = await async_client.post(
@@ -671,3 +708,4 @@ class TestLogout:
         )
         
         assert response.status_code == status.HTTP_403_FORBIDDEN
+

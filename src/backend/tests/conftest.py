@@ -11,8 +11,8 @@ from sqlalchemy import create_engine, event, pool
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.api.deps import get_db  # Import from deps where endpoints actually use it
 from app.config import settings
-from app.db import get_db
 from app.main import app
 from app.models.base import Base
 

@@ -133,7 +133,7 @@ class WorkExperience(Base):
     company_name: Mapped[str] = mapped_column(String(255), nullable=False)
     job_title: Mapped[str] = mapped_column(String(255), nullable=False)
     employment_type: Mapped[Optional[ExperienceType]] = mapped_column(
-        Enum(ExperienceType, name="experience_type")
+        Enum(ExperienceType, name="experience_type", values_callable=lambda x: [e.value for e in x])
     )
     location: Mapped[Optional[str]] = mapped_column(String(255))
 
@@ -172,7 +172,7 @@ class Education(Base):
     # Education details
     institution: Mapped[str] = mapped_column(String(255), nullable=False)
     degree_type: Mapped[Optional[DegreeType]] = mapped_column(
-        Enum(DegreeType, name="degree_type")
+        Enum(DegreeType, name="degree_type", values_callable=lambda x: [e.value for e in x])
     )
     field_of_study: Mapped[Optional[str]] = mapped_column(String(255))
     location: Mapped[Optional[str]] = mapped_column(String(255))
@@ -211,7 +211,7 @@ class Skill(Base):
     # Skill details
     skill_name: Mapped[str] = mapped_column(String(255), nullable=False)
     category: Mapped[Optional[SkillCategory]] = mapped_column(
-        Enum(SkillCategory, name="skill_category")
+        Enum(SkillCategory, name="skill_category", values_callable=lambda x: [e.value for e in x])
     )
     proficiency_level: Mapped[Optional[str]] = mapped_column(String(50))
     years_of_experience: Mapped[Optional[int]] = mapped_column(Integer)

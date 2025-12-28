@@ -147,7 +147,7 @@ async def sqlalchemy_error_handler(request: Request, exc: SQLAlchemyError) -> JS
             "error": {
                 "message": "Database error occurred",
                 "status_code": 500,
-                "detail": {},
+                "detail": {"error": str(exc)},  # Include actual error in detail
             }
         },
     )

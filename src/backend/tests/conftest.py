@@ -165,7 +165,7 @@ async def test_user(db_session: AsyncSession):
         email_verified=True,
     )
     db_session.add(user)
-    await db_session.commit()
+    await db_session.flush()  # Make user available in session without committing
     await db_session.refresh(user)
     
     return user
@@ -182,6 +182,72 @@ def auth_headers(test_user) -> dict[str, str]:
     return {"Authorization": f"Bearer {access_token}"}
 
 
+@pytest.fixture
+def test_pdf_content() -> bytes:
+    """Generate a minimal valid PDF for testing."""
+    # Properly formatted PDF that PyPDF2 can parse
+    pdf_content = b"""%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 <<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+>>
+>>
+>>
+endobj
+4 0 obj
+<<
+/Length 53
+>>
+stream
+BT
+/F1 12 Tf
+100 700 Td
+(Test Resume) Tj
+ET
+endstream
+endobj
+xref
+0 5
+0000000000 65535 f 
+0000000009 00000 n 
+0000000068 00000 n 
+0000000137 00000 n 
+0000000366 00000 n 
+trailer
+<<
+/Size 5
+/Root 1 0 R
+>>
+startxref
+470
+%%EOF
+"""
+    return pdf_content
+
+
 # ============================================================================
 # Database Cleanup Fixtures
 # ============================================================================
@@ -189,14 +255,31 @@ def auth_headers(test_user) -> dict[str, str]:
 
 @pytest.fixture(autouse=True)
 async def reset_db(db_session: AsyncSession) -> AsyncGenerator[None, None]:
-    """Reset database before each test.
+    """Reset database before and after each test.
     
-    This fixture runs automatically before each test to ensure clean state.
+    This fixture runs automatically to ensure clean state and prevent constraint violations.
     """
+    # Clean up before test
+    await db_session.rollback()
+    
     yield
     
-    # Rollback any uncommitted changes
-    await db_session.rollback()
+    # Clean up after test - delete all data to prevent unique constraint violations
+    from sqlalchemy import text
+    
+    try:
+        # Delete in reverse foreign key dependency order
+        await db_session.execute(text("DELETE FROM resume_versions"))
+        await db_session.execute(text("DELETE FROM certifications"))
+        await db_session.execute(text("DELETE FROM skills"))
+        await db_session.execute(text("DELETE FROM education"))
+        await db_session.execute(text("DELETE FROM work_experiences"))
+        await db_session.execute(text("DELETE FROM master_resumes"))
+        await db_session.execute(text("DELETE FROM users"))
+        await db_session.commit()
+    except Exception:
+        # If cleanup fails, just rollback - don't break the test
+        await db_session.rollback()
 
 
 # ============================================================================

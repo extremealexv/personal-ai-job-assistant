@@ -1,5 +1,5 @@
 """Authentication endpoints for user registration, login, and token management."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -122,8 +122,8 @@ async def login(
         )
     
     # Check if account is locked
-    if user.locked_until and user.locked_until > datetime.utcnow():
-        minutes_left = int((user.locked_until - datetime.utcnow()).total_seconds() / 60)
+    if user.locked_until and user.locked_until > datetime.now(timezone.utc):
+        minutes_left = int((user.locked_until - datetime.now(timezone.utc)).total_seconds() / 60)
         raise HTTPException(
             status_code=status.HTTP_423_LOCKED,
             detail=f"Account locked due to too many failed attempts. Try again in {minutes_left} minutes.",
@@ -140,7 +140,7 @@ async def login(
         
         # Lock account after 5 failed attempts
         if user.failed_login_attempts >= 4:  # Will be 5 after this attempt
-            lock_until = datetime.utcnow() + timedelta(minutes=15)
+            lock_until = datetime.now(timezone.utc) + timedelta(minutes=15)
             await db.execute(
                 update(User)
                 .where(User.id == user.id)
@@ -172,7 +172,7 @@ async def login(
         .values(
             failed_login_attempts=0,
             locked_until=None,
-            last_login=datetime.utcnow(),
+            last_login=datetime.now(timezone.utc),
         )
     )
     await db.commit()

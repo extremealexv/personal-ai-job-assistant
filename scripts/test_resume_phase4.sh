@@ -168,11 +168,26 @@ curl -s -X POST "$API_URL/resumes/skills" \
   -H "Content-Type: application/json" \
   -d "{
     \"master_resume_id\": \"$MASTER_RESUME_ID\",
-    \"skills\": [
-      {\"skill_name\": \"Python\", \"category\": \"programming_language\"},
-      {\"skill_name\": \"FastAPI\", \"category\": \"framework\"},
-      {\"skill_name\": \"PostgreSQL\", \"category\": \"tool\"}
-    ]
+    \"skill_name\": \"Python\",
+    \"category\": \"programming_language\"
+  }" > /dev/null
+
+curl -s -X POST "$API_URL/resumes/skills" \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"master_resume_id\": \"$MASTER_RESUME_ID\",
+    \"skill_name\": \"FastAPI\",
+    \"category\": \"framework\"
+  }" > /dev/null
+
+curl -s -X POST "$API_URL/resumes/skills" \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"master_resume_id\": \"$MASTER_RESUME_ID\",
+    \"skill_name\": \"PostgreSQL\",
+    \"category\": \"tool\"
   }" > /dev/null
 
 print_pass "Skills added"

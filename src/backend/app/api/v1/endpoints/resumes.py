@@ -1195,7 +1195,7 @@ async def search_resumes(
     if (
         master_resume.full_name and q.lower() in master_resume.full_name.lower()
     ) or (master_resume.summary and q.lower() in master_resume.summary.lower()):
-        results["master_resume"] = master_resume
+        results["master_resume"] = MasterResumeResponse.model_validate(master_resume)
         results["total_results"] += 1
 
     # Search work experiences
@@ -1212,7 +1212,9 @@ async def search_resumes(
     )
     result_work = await db.execute(stmt_work)
     work_matches = result_work.scalars().all()
-    results["work_experiences"] = list(work_matches)
+    results["work_experiences"] = [
+        WorkExperienceResponse.model_validate(w) for w in work_matches
+    ]
     results["total_results"] += len(work_matches)
 
     # Search education
@@ -1228,7 +1230,7 @@ async def search_resumes(
     )
     result_edu = await db.execute(stmt_edu)
     edu_matches = result_edu.scalars().all()
-    results["education"] = list(edu_matches)
+    results["education"] = [EducationResponse.model_validate(e) for e in edu_matches]
     results["total_results"] += len(edu_matches)
 
     # Search skills
@@ -1241,7 +1243,7 @@ async def search_resumes(
     )
     result_skill = await db.execute(stmt_skill)
     skill_matches = result_skill.scalars().all()
-    results["skills"] = list(skill_matches)
+    results["skills"] = [SkillResponse.model_validate(s) for s in skill_matches]
     results["total_results"] += len(skill_matches)
 
     # Search certifications
@@ -1257,7 +1259,9 @@ async def search_resumes(
     )
     result_cert = await db.execute(stmt_cert)
     cert_matches = result_cert.scalars().all()
-    results["certifications"] = list(cert_matches)
+    results["certifications"] = [
+        CertificationResponse.model_validate(c) for c in cert_matches
+    ]
     results["total_results"] += len(cert_matches)
 
     # Search resume versions
@@ -1275,7 +1279,9 @@ async def search_resumes(
     )
     result_version = await db.execute(stmt_version)
     version_matches = result_version.scalars().all()
-    results["resume_versions"] = list(version_matches)
+    results["resume_versions"] = [
+        ResumeVersionResponse.model_validate(v) for v in version_matches
+    ]
     results["total_results"] += len(version_matches)
 
     return results

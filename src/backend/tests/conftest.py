@@ -239,21 +239,21 @@ async def reset_db(db_session: AsyncSession) -> AsyncGenerator[None, None]:
     yield
     
     # Clean up after test - delete all data to prevent unique constraint violations
-    from app.models.user import User
-    from app.models.resume import MasterResume, WorkExperience, Education, Skill, Certification, ResumeVersion
+    from sqlalchemy import text
     
-    # Delete in reverse foreign key dependency order
-    await db_session.execute("DELETE FROM resume_versions")
-    await db_session.execute("DELETE FROM certifications")
-    await db_session.execute("DELETE FROM skills")
-    await db_session.execute("DELETE FROM education")
-    await db_session.execute("DELETE FROM work_experiences")
-    await db_session.execute("DELETE FROM master_resumes")
-    await db_session.execute("DELETE FROM users")
-    await db_session.commit()
-    
-    # Rollback any remaining uncommitted changes
-    await db_session.rollback()
+    try:
+        # Delete in reverse foreign key dependency order
+        await db_session.execute(text("DELETE FROM resume_versions"))
+        await db_session.execute(text("DELETE FROM certifications"))
+        await db_session.execute(text("DELETE FROM skills"))
+        await db_session.execute(text("DELETE FROM education"))
+        await db_session.execute(text("DELETE FROM work_experiences"))
+        await db_session.execute(text("DELETE FROM master_resumes"))
+        await db_session.execute(text("DELETE FROM users"))
+        await db_session.commit()
+    except Exception:
+        # If cleanup fails, just rollback - don't break the test
+        await db_session.rollback()
 
 
 # ============================================================================

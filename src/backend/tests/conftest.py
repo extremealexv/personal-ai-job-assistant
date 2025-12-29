@@ -422,3 +422,115 @@ async def multiple_job_postings(db_session: AsyncSession, test_user) -> list[dic
         })
     
     return created_jobs
+
+
+# ============================================================================
+# Application Fixtures
+# ============================================================================
+
+@pytest.fixture
+async def sample_resume_version(db_session, test_user, sample_job_posting):
+    """Create a sample resume version for testing."""
+    from app.models.resume import ResumeVersion
+    
+    resume_version = ResumeVersion(
+        master_resume_id=test_user.id,  # Simplified for testing
+        job_posting_id=sample_job_posting.id,
+        version_name="Tailored Resume for Test Job",
+        target_role="Backend Engineer",
+        target_company=sample_job_posting.company_name,
+        modifications={"skills": ["Python", "FastAPI", "PostgreSQL"]},
+    )
+    db_session.add(resume_version)
+    await db_session.commit()
+    await db_session.refresh(resume_version)
+    return resume_version
+
+
+@pytest.fixture
+async def sample_application(db_session, test_user, sample_job_posting, sample_resume_version):
+    """Create a single application for testing."""
+    from app.models.job import Application, ApplicationStatus
+    
+    application = Application(
+        user_id=test_user.id,
+        job_posting_id=sample_job_posting.id,
+        resume_version_id=sample_resume_version.id,
+        status=ApplicationStatus.DRAFT,
+        submission_method="manual",
+    )
+    db_session.add(application)
+    await db_session.commit()
+    await db_session.refresh(application)
+    return application
+
+
+@pytest.fixture
+async def multiple_applications(db_session, test_user, multiple_job_postings):
+    """Create multiple applications with various statuses."""
+    from app.models.job import Application, ApplicationStatus
+    from app.models.resume import ResumeVersion
+    from datetime import datetime, timedelta
+    
+    # Create resume versions for each job
+    resume_versions = []
+    for i, job_data in enumerate(multiple_job_postings):
+        rv = ResumeVersion(
+            master_resume_id=test_user.id,
+            job_posting_id=job_data["id"],
+            version_name=f"Resume v{i+1}",
+            target_role=job_data["job_title"],
+            target_company=job_data["company_name"],
+        )
+        db_session.add(rv)
+        await db_session.flush()
+        await db_session.refresh(rv)
+        resume_versions.append(rv)
+    
+    # Application statuses to create
+    applications_data = [
+        {"status": ApplicationStatus.DRAFT, "days_ago": 1},
+        {"status": ApplicationStatus.SUBMITTED, "days_ago": 3},
+        {"status": ApplicationStatus.SUBMITTED, "days_ago": 5},
+        {"status": ApplicationStatus.PHONE_SCREEN, "days_ago": 7},
+        {"status": ApplicationStatus.REJECTED, "days_ago": 10},
+    ]
+    
+    created_applications = []
+    for i, app_data in enumerate(applications_data):
+        created_at = datetime.utcnow() - timedelta(days=app_data["days_ago"])
+        
+        application = Application(
+            user_id=test_user.id,
+            job_posting_id=multiple_job_postings[i]["id"],
+            resume_version_id=resume_versions[i].id,
+            status=app_data["status"],
+            submission_method="manual",
+            submitted_at=created_at if app_data["status"] != ApplicationStatus.DRAFT else None,
+            created_at=created_at,
+        )
+        db_session.add(application)
+        await db_session.flush()
+        await db_session.refresh(application)
+        created_applications.append(application)
+    
+    await db_session.commit()
+    return created_applications
+
+
+@pytest.fixture
+async def other_user(db_session):
+    """Create another user for testing authorization."""
+    from app.models.user import User
+    from app.core.security import get_password_hash
+    
+    other = User(
+        email="other@example.com",
+        password_hash=get_password_hash("password123"),
+        full_name="Other User",
+        is_active=True,
+    )
+    db_session.add(other)
+    await db_session.commit()
+    await db_session.refresh(other)
+    return other

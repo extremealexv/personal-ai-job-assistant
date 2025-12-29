@@ -312,11 +312,11 @@ def pytest_configure(config):
 
 
 @pytest.fixture
-async def sample_job_posting(db_session: AsyncSession, test_user) -> dict:
+async def sample_job_posting(db_session: AsyncSession, test_user):
     """Create a sample job posting for testing.
     
     Returns:
-        Dictionary with job posting data including ID
+        JobPosting ORM object
     """
     from app.models.job import JobPosting, JobSource, JobStatus
     
@@ -340,18 +340,10 @@ async def sample_job_posting(db_session: AsyncSession, test_user) -> dict:
     )
     
     db_session.add(job)
-    await db_session.flush()
+    await db_session.commit()
     await db_session.refresh(job)
     
-    return {
-        "id": job.id,
-        "user_id": job.user_id,
-        "company_name": job.company_name,
-        "job_title": job.job_title,
-        "job_url": job.job_url,
-        "status": job.status,
-        "interest_level": job.interest_level
-    }
+    return job
 
 
 @pytest.fixture
@@ -447,10 +439,10 @@ async def sample_resume_version(db_session, test_user, sample_job_posting):
     # Create resume version
     resume_version = ResumeVersion(
         master_resume_id=master_resume.id,
-        job_posting_id=sample_job_posting["id"],  # sample_job_posting is a dict
+        job_posting_id=sample_job_posting.id,  # sample_job_posting is now an ORM object
         version_name="Tailored Resume for Test Job",
         target_role="Backend Engineer",
-        target_company=sample_job_posting["company_name"],
+        target_company=sample_job_posting.company_name,
         modifications={"skills": ["Python", "FastAPI", "PostgreSQL"]},
     )
     db_session.add(resume_version)
@@ -466,7 +458,7 @@ async def sample_application(db_session, test_user, sample_job_posting, sample_r
     
     application = Application(
         user_id=test_user.id,
-        job_posting_id=sample_job_posting["id"],  # sample_job_posting is a dict
+        job_posting_id=sample_job_posting.id,  # sample_job_posting is now an ORM object
         resume_version_id=sample_resume_version.id,
         status=ApplicationStatus.DRAFT,
         submission_method="manual",

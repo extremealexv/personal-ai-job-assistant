@@ -147,7 +147,7 @@ async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, 
     
     app.dependency_overrides[get_db] = override_get_db
     
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    async with AsyncClient(app=app, base_url="http://test", follow_redirects=True) as ac:
         yield ac
     
     app.dependency_overrides.clear()
@@ -563,7 +563,7 @@ async def sample_cover_letter(db_session, sample_application):
     
     cover_letter = CoverLetter(
         application_id=sample_application.id,
-        content="Dear Hiring Manager,\n\nI am excited to apply for this position...",
+        content="Dear Hiring Manager,\n\nI am excited to apply for this position. With over 10 years of experience in software development and a proven track record of delivering high-quality solutions, I am confident I would be an excellent addition to your team.",
         version_number=1,
         is_active=True,
         ai_model_used="gpt-4",
@@ -584,7 +584,7 @@ async def multiple_cover_letter_versions(db_session, sample_application):
     # Version 1 - Active
     v1 = CoverLetter(
         application_id=sample_application.id,
-        content="Dear Hiring Manager,\n\nFirst version of cover letter...",
+        content="Dear Hiring Manager,\n\nFirst version of cover letter expressing my strong interest in this position and outlining my relevant experience and qualifications.",
         version_number=1,
         is_active=True,
         ai_model_used="gpt-4",
@@ -595,7 +595,7 @@ async def multiple_cover_letter_versions(db_session, sample_application):
     # Version 2 - Inactive
     v2 = CoverLetter(
         application_id=sample_application.id,
-        content="Dear Hiring Manager,\n\nUpdated version with new information...",
+        content="Dear Hiring Manager,\n\nUpdated version with new information highlighting my recent achievements and technical skills that align perfectly with your requirements.",
         version_number=2,
         is_active=False,
         ai_model_used="gpt-4",

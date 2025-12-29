@@ -113,6 +113,31 @@ def verify_token(token: str, token_type: str = "access") -> Optional[dict[str, A
         return None
 
 
+def decode_access_token(token: str) -> dict[str, Any]:
+    """
+    Decode an access token and return its payload.
+    
+    Args:
+        token: The JWT access token to decode
+        
+    Returns:
+        Decoded token payload
+        
+    Raises:
+        JWTError: If token is invalid or expired
+    """
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        
+        # Verify it's an access token
+        if payload.get("type") != "access":
+            raise JWTError("Invalid token type")
+            
+        return payload
+    except JWTError as e:
+        raise JWTError(f"Could not validate credentials: {str(e)}") from e
+
+
 def is_valid_password(password: str) -> bool:
     """
     Validate password strength.

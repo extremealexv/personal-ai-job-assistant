@@ -11,8 +11,8 @@ from sqlalchemy import create_engine, event, pool
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.api.deps import get_db  # Import from deps where endpoints actually use it
 from app.config import settings
-from app.db import get_db
 from app.main import app
 from app.models.base import Base
 
@@ -96,19 +96,26 @@ async def test_engine() -> AsyncGenerator[AsyncEngine, None]:
 
 @pytest.fixture
 async def db_session(test_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
-    """Create database session for tests.
+    """Create database session for tests with transaction management.
     
-    Each test gets a fresh session that's rolled back after the test.
+    Uses nested transactions (savepoints) so data persists within test
+    but rolls back after test completes.
     """
+    connection = await test_engine.connect()
+    transaction = await connection.begin()
+    
     async_session = async_sessionmaker(
-        test_engine,
+        bind=connection,
         class_=AsyncSession,
         expire_on_commit=False,
+        join_transaction_mode="create_savepoint"
     )
     
     async with async_session() as session:
         yield session
-        await session.rollback()
+    
+    await transaction.rollback()
+    await connection.close()
 
 
 # ============================================================================
@@ -140,7 +147,7 @@ async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, 
     
     app.dependency_overrides[get_db] = override_get_db
     
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    async with AsyncClient(app=app, base_url="http://test", follow_redirects=True) as ac:
         yield ac
     
     app.dependency_overrides.clear()
@@ -165,7 +172,7 @@ async def test_user(db_session: AsyncSession):
         email_verified=True,
     )
     db_session.add(user)
-    await db_session.flush()  # Make user available in session without committing
+    await db_session.commit()  # Commit so user is visible to all queries in this session
     await db_session.refresh(user)
     
     return user
@@ -269,6 +276,9 @@ async def reset_db(db_session: AsyncSession) -> AsyncGenerator[None, None]:
     
     try:
         # Delete in reverse foreign key dependency order
+        await db_session.execute(text("DELETE FROM cover_letters"))
+        await db_session.execute(text("DELETE FROM applications"))
+        await db_session.execute(text("DELETE FROM job_postings"))
         await db_session.execute(text("DELETE FROM resume_versions"))
         await db_session.execute(text("DELETE FROM certifications"))
         await db_session.execute(text("DELETE FROM skills"))
@@ -293,3 +303,308 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "integration: Integration tests (with DB)")
     config.addinivalue_line("markers", "e2e: End-to-end tests (full workflow)")
     config.addinivalue_line("markers", "slow: Slow tests")
+    config.addinivalue_line("markers", "job_management: Job management tests")
+
+
+# ============================================================================
+# Job Posting Fixtures
+# ============================================================================
+
+
+@pytest.fixture
+async def sample_job_posting(db_session: AsyncSession, test_user):
+    """Create a sample job posting for testing.
+    
+    Returns:
+        JobPosting ORM object
+    """
+    from app.models.job import JobPosting, JobSource, JobStatus
+    
+    job = JobPosting(
+        user_id=test_user.id,
+        company_name="TechCorp Inc",
+        job_title="Senior Backend Engineer",
+        job_url="https://techcorp.example.com/jobs/senior-backend-engineer",
+        source=JobSource.MANUAL,
+        location="San Francisco, CA",
+        salary_range="$150k-$200k",
+        employment_type="Full-time",
+        remote_policy="Hybrid",
+        job_description="We are seeking a Senior Backend Engineer to join our team...",
+        requirements="5+ years Python experience, FastAPI, PostgreSQL",
+        nice_to_have="Experience with Redis, Celery, Docker",
+        interest_level=4,
+        notes="Great company culture",
+        extracted_keywords=["python", "fastapi", "postgresql", "redis", "docker"],
+        status=JobStatus.SAVED
+    )
+    
+    db_session.add(job)
+    await db_session.commit()
+    await db_session.refresh(job)
+    
+    return job
+
+
+@pytest.fixture
+async def multiple_job_postings(db_session: AsyncSession, test_user) -> list[dict]:
+    """Create multiple job postings for testing pagination and filtering.
+    
+    Returns:
+        List of dictionaries with job posting data
+    """
+    from app.models.job import JobPosting, JobSource, JobStatus
+    
+    jobs_data = [
+        {
+            "company_name": "TechCorp",
+            "job_title": "Senior Backend Engineer",
+            "status": JobStatus.SAVED,
+            "interest_level": 5
+        },
+        {
+            "company_name": "DataSoft",
+            "job_title": "Python Developer",
+            "status": JobStatus.APPLIED,
+            "interest_level": 4
+        },
+        {
+            "company_name": "CloudNine",
+            "job_title": "Full Stack Engineer",
+            "status": JobStatus.INTERVIEWING,
+            "interest_level": 3
+        },
+        {
+            "company_name": "StartupXYZ",
+            "job_title": "Backend Developer",
+            "status": JobStatus.SAVED,
+            "interest_level": 2
+        },
+        {
+            "company_name": "MegaCorp",
+            "job_title": "Software Engineer",
+            "status": JobStatus.REJECTED,
+            "interest_level": 1
+        }
+    ]
+    
+    created_jobs = []
+    for job_data in jobs_data:
+        job = JobPosting(
+            user_id=test_user.id,
+            company_name=job_data["company_name"],
+            job_title=job_data["job_title"],
+            job_url=f"https://{job_data['company_name'].lower()}.com/jobs",
+            source=JobSource.MANUAL,
+            status=job_data["status"],
+            interest_level=job_data["interest_level"],
+            job_description=f"Job at {job_data['company_name']}",
+            extracted_keywords=["python", "backend", "api"]
+        )
+        db_session.add(job)
+        await db_session.flush()
+        await db_session.refresh(job)
+        
+        created_jobs.append({
+            "id": job.id,
+            "company_name": job.company_name,
+            "job_title": job.job_title,
+            "status": job.status,
+            "interest_level": job.interest_level
+        })
+    
+    return created_jobs
+
+
+# ============================================================================
+# Application Fixtures
+# ============================================================================
+
+@pytest.fixture
+async def sample_resume_version(db_session, test_user, sample_job_posting):
+    """Create a sample resume version for testing."""
+    from app.models.resume import MasterResume, ResumeVersion
+    
+    # Create a master resume first
+    master_resume = MasterResume(
+        user_id=test_user.id,
+        original_filename="test_resume.pdf",
+        full_name=test_user.full_name,
+        email=test_user.email,
+    )
+    db_session.add(master_resume)
+    await db_session.flush()
+    await db_session.refresh(master_resume)
+    
+    # Create resume version
+    resume_version = ResumeVersion(
+        master_resume_id=master_resume.id,
+        job_posting_id=sample_job_posting.id,  # sample_job_posting is now an ORM object
+        version_name="Tailored Resume for Test Job",
+        target_role="Backend Engineer",
+        target_company=sample_job_posting.company_name,
+        modifications={"skills": ["Python", "FastAPI", "PostgreSQL"]},
+    )
+    db_session.add(resume_version)
+    await db_session.commit()
+    await db_session.refresh(resume_version)
+    return resume_version
+
+
+@pytest.fixture
+async def sample_application(db_session, test_user, sample_job_posting, sample_resume_version):
+    """Create a single application for testing."""
+    from app.models.job import Application, ApplicationStatus
+    
+    application = Application(
+        user_id=test_user.id,
+        job_posting_id=sample_job_posting.id,  # sample_job_posting is now an ORM object
+        resume_version_id=sample_resume_version.id,
+        status=ApplicationStatus.DRAFT,
+        submission_method="manual",
+    )
+    db_session.add(application)
+    await db_session.commit()
+    await db_session.refresh(application)
+    return application
+
+
+@pytest.fixture
+async def multiple_applications(db_session, test_user, multiple_job_postings):
+    """Create multiple applications with various statuses."""
+    from app.models.job import Application, ApplicationStatus
+    from app.models.resume import MasterResume, ResumeVersion
+    from datetime import datetime, timedelta
+    
+    # Create a master resume first
+    master_resume = MasterResume(
+        user_id=test_user.id,
+        original_filename="test_resume.pdf",
+        full_name=test_user.full_name,
+        email=test_user.email,
+    )
+    db_session.add(master_resume)
+    await db_session.flush()
+    await db_session.refresh(master_resume)
+    
+    # Create resume versions for each job
+    resume_versions = []
+    for i, job_data in enumerate(multiple_job_postings):
+        rv = ResumeVersion(
+            master_resume_id=master_resume.id,  # Use actual master_resume ID
+            job_posting_id=job_data["id"],
+            version_name=f"Resume v{i+1}",
+            target_role=job_data["job_title"],
+            target_company=job_data["company_name"],
+        )
+        db_session.add(rv)
+        await db_session.flush()
+        await db_session.refresh(rv)
+        resume_versions.append(rv)
+    
+    # Application statuses to create
+    applications_data = [
+        {"status": ApplicationStatus.DRAFT, "days_ago": 1},
+        {"status": ApplicationStatus.SUBMITTED, "days_ago": 3},
+        {"status": ApplicationStatus.SUBMITTED, "days_ago": 5},
+        {"status": ApplicationStatus.PHONE_SCREEN, "days_ago": 7},
+        {"status": ApplicationStatus.REJECTED, "days_ago": 10},
+    ]
+    
+    created_applications = []
+    for i, app_data in enumerate(applications_data):
+        created_at = datetime.utcnow() - timedelta(days=app_data["days_ago"])
+        
+        application = Application(
+            user_id=test_user.id,
+            job_posting_id=multiple_job_postings[i]["id"],
+            resume_version_id=resume_versions[i].id,
+            status=app_data["status"],
+            submission_method="manual",
+            submitted_at=created_at if app_data["status"] != ApplicationStatus.DRAFT else None,
+            created_at=created_at,
+        )
+        db_session.add(application)
+        await db_session.flush()
+        await db_session.refresh(application)
+        created_applications.append(application)
+    
+    await db_session.commit()
+    return created_applications
+
+
+@pytest.fixture
+async def other_user(db_session):
+    """Create another user for testing authorization."""
+    from app.models.user import User
+    from app.core.security import get_password_hash
+    
+    other = User(
+        email="other@example.com",
+        password_hash=get_password_hash("password123"),
+        full_name="Other User",
+        is_active=True,
+    )
+    db_session.add(other)
+    await db_session.commit()
+    await db_session.refresh(other)
+    return other
+
+
+# ================================================================================
+# Cover Letter Fixtures
+# ================================================================================
+
+
+@pytest.fixture
+async def sample_cover_letter(db_session, sample_application):
+    """Create a single cover letter for testing."""
+    from app.models.job import CoverLetter
+    
+    cover_letter = CoverLetter(
+        application_id=sample_application.id,
+        content="Dear Hiring Manager,\n\nI am excited to apply for this position. With over 10 years of experience in software development and a proven track record of delivering high-quality solutions, I am confident I would be an excellent addition to your team.",
+        version_number=1,
+        is_active=True,
+        ai_model_used="gpt-4",
+    )
+    db_session.add(cover_letter)
+    await db_session.commit()
+    await db_session.refresh(cover_letter)
+    return cover_letter
+
+
+@pytest.fixture
+async def multiple_cover_letter_versions(db_session, sample_application):
+    """Create multiple versions of cover letters for testing."""
+    from app.models.job import CoverLetter
+    
+    versions = []
+    
+    # Version 1 - Active
+    v1 = CoverLetter(
+        application_id=sample_application.id,
+        content="Dear Hiring Manager,\n\nFirst version of cover letter expressing my strong interest in this position and outlining my relevant experience and qualifications.",
+        version_number=1,
+        is_active=True,
+        ai_model_used="gpt-4",
+    )
+    db_session.add(v1)
+    versions.append(v1)
+    
+    # Version 2 - Inactive
+    v2 = CoverLetter(
+        application_id=sample_application.id,
+        content="Dear Hiring Manager,\n\nUpdated version with new information highlighting my recent achievements and technical skills that align perfectly with your requirements.",
+        version_number=2,
+        is_active=False,
+        ai_model_used="gpt-4",
+    )
+    db_session.add(v2)
+    versions.append(v2)
+    
+    await db_session.commit()
+    for v in versions:
+        await db_session.refresh(v)
+    
+    return versions

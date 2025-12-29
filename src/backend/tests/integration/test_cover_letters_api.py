@@ -42,7 +42,7 @@ class TestCoverLetterCRUD:
             json=cover_letter_data,
         )
 
-        assert response.status_code == 401
+        assert response.status_code == 403
 
     async def test_create_cover_letter_application_not_found(
         self, async_client, auth_headers

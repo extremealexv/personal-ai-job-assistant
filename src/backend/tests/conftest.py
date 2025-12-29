@@ -549,3 +549,62 @@ async def other_user(db_session):
     await db_session.commit()
     await db_session.refresh(other)
     return other
+
+
+# ================================================================================
+# Cover Letter Fixtures
+# ================================================================================
+
+
+@pytest.fixture
+async def sample_cover_letter(db_session, sample_application):
+    """Create a single cover letter for testing."""
+    from app.models.job import CoverLetter
+    
+    cover_letter = CoverLetter(
+        application_id=sample_application.id,
+        content="Dear Hiring Manager,\n\nI am excited to apply for this position...",
+        version_number=1,
+        is_active=True,
+        ai_model_used="gpt-4",
+    )
+    db_session.add(cover_letter)
+    await db_session.commit()
+    await db_session.refresh(cover_letter)
+    return cover_letter
+
+
+@pytest.fixture
+async def multiple_cover_letter_versions(db_session, sample_application):
+    """Create multiple versions of cover letters for testing."""
+    from app.models.job import CoverLetter
+    
+    versions = []
+    
+    # Version 1 - Active
+    v1 = CoverLetter(
+        application_id=sample_application.id,
+        content="Dear Hiring Manager,\n\nFirst version of cover letter...",
+        version_number=1,
+        is_active=True,
+        ai_model_used="gpt-4",
+    )
+    db_session.add(v1)
+    versions.append(v1)
+    
+    # Version 2 - Inactive
+    v2 = CoverLetter(
+        application_id=sample_application.id,
+        content="Dear Hiring Manager,\n\nUpdated version with new information...",
+        version_number=2,
+        is_active=False,
+        ai_model_used="gpt-4",
+    )
+    db_session.add(v2)
+    versions.append(v2)
+    
+    await db_session.commit()
+    for v in versions:
+        await db_session.refresh(v)
+    
+    return versions

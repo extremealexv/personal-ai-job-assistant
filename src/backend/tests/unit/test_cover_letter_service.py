@@ -22,7 +22,7 @@ class TestCoverLetterServiceCRUD:
         """Test creating a cover letter."""
         data = CoverLetterCreate(
             application_id=sample_application.id,
-            content="Dear Hiring Manager,\n\nI am excited to apply...",
+            content="Dear Hiring Manager,\n\nI am excited to apply for this position. With over 10 years of experience in software development, I believe I would be a great fit for your team and organization.",
             prompt_template_id=None,
             ai_model_used="gpt-4",
         )
@@ -44,7 +44,7 @@ class TestCoverLetterServiceCRUD:
         """Test that second version is not automatically active."""
         data = CoverLetterCreate(
             application_id=sample_cover_letter.application_id,
-            content="Updated version of the cover letter...",
+            content="Updated version of the cover letter with new information highlighting my recent achievements and relevant skills for this specific role.",
         )
 
         cover_letter = await cover_letter_service.create_cover_letter(
@@ -60,7 +60,7 @@ class TestCoverLetterServiceCRUD:
         """Test creating cover letter for non-existent application."""
         data = CoverLetterCreate(
             application_id=uuid4(),
-            content="Dear Hiring Manager...",
+            content="Dear Hiring Manager, I am writing to express my strong interest in this position and would like to discuss how my background aligns with your needs.",
         )
 
         with pytest.raises(NotFoundError, match="Application .* not found"):
@@ -75,7 +75,7 @@ class TestCoverLetterServiceCRUD:
         wrong_user_id = uuid4()
         data = CoverLetterCreate(
             application_id=sample_application.id,
-            content="Dear Hiring Manager...",
+            content="Dear Hiring Manager, I am writing to express my strong interest in this position and would like to discuss how my background aligns with your needs.",
         )
 
         with pytest.raises(
@@ -121,7 +121,7 @@ class TestCoverLetterServiceCRUD:
     ):
         """Test updating a cover letter."""
         update_data = CoverLetterUpdate(
-            content="Updated cover letter content with new information..."
+            content="Updated cover letter content with new information highlighting my recent achievements, technical skills, and how they align with the company's mission."
         )
 
         cover_letter = await cover_letter_service.update_cover_letter(

@@ -13,7 +13,7 @@ class TestCoverLetterCRUD:
         """Test POST /api/v1/cover-letters - Create cover letter."""
         cover_letter_data = {
             "application_id": str(sample_application.id),
-            "content": "Dear Hiring Manager,\n\nI am excited to apply for this position at your company...",
+            "content": "Dear Hiring Manager,\n\nI am excited to apply for this position at your company. With over 10 years of experience in software development and a proven track record of success, I believe I would be an excellent fit for your team.",
             "ai_model_used": "gpt-4",
         }
 
@@ -34,7 +34,7 @@ class TestCoverLetterCRUD:
         """Test creating cover letter without authentication."""
         cover_letter_data = {
             "application_id": str(sample_application.id),
-            "content": "Dear Hiring Manager...",
+            "content": "Dear Hiring Manager, I am writing to express my strong interest in this position and would like to discuss how my qualifications align with your needs.",
         }
 
         response = await async_client.post(
@@ -50,7 +50,7 @@ class TestCoverLetterCRUD:
         """Test creating cover letter for non-existent application."""
         cover_letter_data = {
             "application_id": str(uuid4()),
-            "content": "Dear Hiring Manager...",
+            "content": "Dear Hiring Manager, I am writing to express my strong interest in this position and would like to discuss how my qualifications align with your needs.",
         }
 
         response = await async_client.post(
@@ -89,7 +89,7 @@ class TestCoverLetterCRUD:
     ):
         """Test PUT /api/v1/cover-letters/{id} - Update cover letter."""
         update_data = {
-            "content": "Updated cover letter content with more compelling arguments..."
+            "content": "Updated cover letter content with more compelling arguments highlighting my technical expertise, leadership experience, and passion for this opportunity."
         }
 
         response = await async_client.put(

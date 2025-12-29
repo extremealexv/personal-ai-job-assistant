@@ -91,14 +91,14 @@ class TestJobPostingCRUD:
     async def test_get_job_posting(self, async_client, auth_headers, sample_job_posting):
         """Test GET /api/v1/jobs/{id} - Get job by ID."""
         response = await async_client.get(
-            f"/api/v1/jobs/{sample_job_posting['id']}",
+            f"/api/v1/jobs/{sample_job_posting.id}",
             headers=auth_headers
         )
         
         assert response.status_code == 200
         data = response.json()
-        assert data["id"] == str(sample_job_posting["id"])
-        assert data["company_name"] == sample_job_posting["company_name"]
+        assert data["id"] == str(sample_job_posting.id)
+        assert data["company_name"] == sample_job_posting.company_name
 
     async def test_get_job_posting_not_found(self, async_client, auth_headers):
         """Test getting non-existent job."""
@@ -118,7 +118,7 @@ class TestJobPostingCRUD:
         }
         
         response = await async_client.put(
-            f"/api/v1/jobs/{sample_job_posting['id']}",
+            f"/api/v1/jobs/{sample_job_posting.id}",
             json=update_data,
             headers=auth_headers
         )
@@ -134,7 +134,7 @@ class TestJobPostingCRUD:
         status_data = {"status": "applied"}
         
         response = await async_client.patch(
-            f"/api/v1/jobs/{sample_job_posting['id']}/status",
+            f"/api/v1/jobs/{sample_job_posting.id}/status",
             json=status_data,
             headers=auth_headers
         )
@@ -147,7 +147,7 @@ class TestJobPostingCRUD:
     async def test_delete_job_posting(self, async_client, auth_headers, sample_job_posting):
         """Test DELETE /api/v1/jobs/{id} - Soft delete job."""
         response = await async_client.delete(
-            f"/api/v1/jobs/{sample_job_posting['id']}",
+            f"/api/v1/jobs/{sample_job_posting.id}",
             headers=auth_headers
         )
         
@@ -155,7 +155,7 @@ class TestJobPostingCRUD:
         
         # Verify job is deleted (should return 404)
         get_response = await async_client.get(
-            f"/api/v1/jobs/{sample_job_posting['id']}",
+            f"/api/v1/jobs/{sample_job_posting.id}",
             headers=auth_headers
         )
         assert get_response.status_code == 404
@@ -357,10 +357,10 @@ class TestJobPostingAuthorization:
         # (In reality, we'd need to generate auth token for second user)
         # For this test, we'll just verify the job belongs to correct user
         response = await async_client.get(
-            f"/api/v1/jobs/{sample_job_posting['id']}",
+            f"/api/v1/jobs/{sample_job_posting.id}",
             headers=auth_headers
         )
         
         assert response.status_code == 200
         data = response.json()
-        assert data["user_id"] == str(sample_job_posting["user_id"])
+        assert data["user_id"] == str(sample_job_posting.user_id)

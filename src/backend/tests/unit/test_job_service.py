@@ -96,12 +96,12 @@ class TestJobServiceCRUD:
         """Test getting a job posting by ID."""
         job = await JobService.get_job_posting(
             db_session,
-            sample_job_posting["id"],
+            sample_job_posting.id,
             test_user.id
         )
         
-        assert job.id == sample_job_posting["id"]
-        assert job.company_name == sample_job_posting["company_name"]
+        assert job.id == sample_job_posting.id
+        assert job.company_name == sample_job_posting.company_name
 
     async def test_get_job_posting_not_found(self, db_session, test_user):
         """Test getting non-existent job posting raises NotFoundError."""
@@ -115,7 +115,7 @@ class TestJobServiceCRUD:
         with pytest.raises(ForbiddenError, match="Access denied"):
             await JobService.get_job_posting(
                 db_session,
-                sample_job_posting["id"],
+                sample_job_posting.id,
                 wrong_user_id
             )
 
@@ -129,7 +129,7 @@ class TestJobServiceCRUD:
         
         job = await JobService.update_job_posting(
             db_session,
-            sample_job_posting["id"],
+            sample_job_posting.id,
             test_user.id,
             update_data
         )
@@ -138,7 +138,7 @@ class TestJobServiceCRUD:
         assert job.interest_level == 5
         assert job.notes == "Updated notes"
         # Original fields should remain unchanged
-        assert job.job_title == sample_job_posting["job_title"]
+        assert job.job_title == sample_job_posting.job_title
 
     async def test_update_job_description_updates_keywords(self, db_session, test_user, sample_job_posting):
         """Test that updating job description updates keywords."""
@@ -149,7 +149,7 @@ class TestJobServiceCRUD:
         
         job = await JobService.update_job_posting(
             db_session,
-            sample_job_posting["id"],
+            sample_job_posting.id,
             test_user.id,
             update_data
         )
@@ -164,7 +164,7 @@ class TestJobServiceCRUD:
         
         job = await JobService.update_job_status(
             db_session,
-            sample_job_posting["id"],
+            sample_job_posting.id,
             test_user.id,
             status_data
         )
@@ -176,7 +176,7 @@ class TestJobServiceCRUD:
         """Test soft deleting a job posting."""
         await JobService.delete_job_posting(
             db_session,
-            sample_job_posting["id"],
+            sample_job_posting.id,
             test_user.id
         )
         
@@ -184,7 +184,7 @@ class TestJobServiceCRUD:
         with pytest.raises(NotFoundError):
             await JobService.get_job_posting(
                 db_session,
-                sample_job_posting["id"],
+                sample_job_posting.id,
                 test_user.id
             )
 

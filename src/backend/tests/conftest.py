@@ -431,14 +431,26 @@ async def multiple_job_postings(db_session: AsyncSession, test_user) -> list[dic
 @pytest.fixture
 async def sample_resume_version(db_session, test_user, sample_job_posting):
     """Create a sample resume version for testing."""
-    from app.models.resume import ResumeVersion
+    from app.models.resume import MasterResume, ResumeVersion
     
+    # Create a master resume first
+    master_resume = MasterResume(
+        user_id=test_user.id,
+        original_filename="test_resume.pdf",
+        full_name=test_user.full_name,
+        email=test_user.email,
+    )
+    db_session.add(master_resume)
+    await db_session.flush()
+    await db_session.refresh(master_resume)
+    
+    # Create resume version
     resume_version = ResumeVersion(
-        master_resume_id=test_user.id,  # Simplified for testing
-        job_posting_id=sample_job_posting.id,
+        master_resume_id=master_resume.id,
+        job_posting_id=sample_job_posting["id"],  # sample_job_posting is a dict
         version_name="Tailored Resume for Test Job",
         target_role="Backend Engineer",
-        target_company=sample_job_posting.company_name,
+        target_company=sample_job_posting["company_name"],
         modifications={"skills": ["Python", "FastAPI", "PostgreSQL"]},
     )
     db_session.add(resume_version)
@@ -454,7 +466,7 @@ async def sample_application(db_session, test_user, sample_job_posting, sample_r
     
     application = Application(
         user_id=test_user.id,
-        job_posting_id=sample_job_posting.id,
+        job_posting_id=sample_job_posting["id"],  # sample_job_posting is a dict
         resume_version_id=sample_resume_version.id,
         status=ApplicationStatus.DRAFT,
         submission_method="manual",
@@ -469,14 +481,25 @@ async def sample_application(db_session, test_user, sample_job_posting, sample_r
 async def multiple_applications(db_session, test_user, multiple_job_postings):
     """Create multiple applications with various statuses."""
     from app.models.job import Application, ApplicationStatus
-    from app.models.resume import ResumeVersion
+    from app.models.resume import MasterResume, ResumeVersion
     from datetime import datetime, timedelta
+    
+    # Create a master resume first
+    master_resume = MasterResume(
+        user_id=test_user.id,
+        original_filename="test_resume.pdf",
+        full_name=test_user.full_name,
+        email=test_user.email,
+    )
+    db_session.add(master_resume)
+    await db_session.flush()
+    await db_session.refresh(master_resume)
     
     # Create resume versions for each job
     resume_versions = []
     for i, job_data in enumerate(multiple_job_postings):
         rv = ResumeVersion(
-            master_resume_id=test_user.id,
+            master_resume_id=master_resume.id,  # Use actual master_resume ID
             job_posting_id=job_data["id"],
             version_name=f"Resume v{i+1}",
             target_role=job_data["job_title"],

@@ -8,11 +8,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.config import settings
 from app.core.ai_exceptions import AIProviderError
 from app.models.job import JobPosting
 from app.models.prompt import PromptTask, PromptTemplate
 from app.models.resume import MasterResume, ResumeVersion
 from app.providers.openai_provider import OpenAIProvider
+from app.providers.gemini_provider import GeminiProvider
 from app.schemas.resume import ResumeVersionCreate
 
 logger = logging.getLogger(__name__)
@@ -22,8 +24,17 @@ class AIResumeTailoringService:
     """Service for AI-powered resume tailoring."""
 
     def __init__(self):
-        """Initialize the resume tailoring service."""
-        self.ai_provider = OpenAIProvider()
+        """Initialize the resume tailoring service with configured AI provider."""
+        # Select provider based on config
+        if settings.ai_provider == "gemini":
+            logger.info("Using Google Gemini as AI provider")
+            self.ai_provider = GeminiProvider()
+        elif settings.ai_provider == "openai":
+            logger.info("Using OpenAI as AI provider")
+            self.ai_provider = OpenAIProvider()
+        else:
+            logger.warning(f"Unknown AI provider '{settings.ai_provider}', defaulting to Gemini")
+            self.ai_provider = GeminiProvider()
 
     async def tailor_resume_for_job(
         self,

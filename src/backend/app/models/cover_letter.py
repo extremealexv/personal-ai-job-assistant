@@ -1,27 +1,11 @@
-from datetime import datetime
-from sqlalchemy import (
-    Column, String, DateTime, ForeignKey, Integer, Boolean
-)
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
-import uuid
+"""Cover letter model - re-exported from job.py for backward compatibility.
 
-from app.models.base import Base
+Note: The CoverLetter class is now defined in app.models.job
+to keep related models together. This file exists only for backward compatibility
+with existing imports.
+"""
 
-class CoverLetter(Base):
-    __tablename__ = "cover_letters"
+# Re-export from the canonical location
+from app.models.job import CoverLetter
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    application_id = Column(UUID(as_uuid=True), ForeignKey("applications.id"), nullable=False)
-    content = Column(String, nullable=False)
-    prompt_template_id = Column(UUID(as_uuid=True))
-    ai_model_used = Column(String(100))
-    generation_timestamp = Column(DateTime)
-    version_number = Column(Integer, default=1)
-    is_active = Column(Boolean, default=True)
-    pdf_file_path = Column(String(1000))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # Relationships
-    application = relationship("Application", back_populates="cover_letters")
+__all__ = ["CoverLetter"]

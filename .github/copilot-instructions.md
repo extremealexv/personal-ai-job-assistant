@@ -8,7 +8,14 @@ This is a **single-user** AI-powered job application management system with thre
 
 **Important**: This is NOT a multi-tenant SaaS. All features serve one user managing their personal job search.
 
-**Current Status**: Phase 1 (Foundation) - Backend skeleton with database schema defined, authentication pending implementation.
+**Current Status**: **Phase 4 (Search & Analytics) - Active Development**
+- ✅ **Backend Core Complete**: 122 passing tests, 85-98% coverage on core modules
+- ✅ **Resume Management (Issue #54)**: 33 endpoints, full CRUD, versioning
+- ✅ **Job Management (Issue #56 Phase 1)**: 8 endpoints, lifecycle tracking, keyword extraction
+- ✅ **Application Tracking (Issue #56 Phase 2)**: 7 endpoints, status management, job auto-sync
+- ✅ **Cover Letter System (Issue #56 Phase 3)**: 7 endpoints, versioning, tone selection
+- 🚧 **Search & Analytics (Issue #56 Phase 4)**: Global search, analytics dashboard (in progress)
+- ⏳ **Upcoming**: AI resume tailoring, cover letter generation, browser extension
 
 ## Quick Start Commands
 
@@ -51,17 +58,23 @@ npm run build
 ```bash
 # Backend tests
 cd src/backend
-pytest -m unit              # Fast unit tests only
-pytest -m integration       # API endpoint tests
-pytest --cov               # All tests with coverage report
+pytest                     # Run all tests (122 tests, ~10-15 seconds)
+pytest tests/unit/         # Unit tests only (61 tests, fast)
+pytest tests/integration/  # Integration tests only (61 tests)
+pytest --cov=app/services --cov=app/api/v1/endpoints  # With coverage
 
-# Frontend tests
+# Run specific test files
+pytest tests/unit/test_job_service.py -v
+pytest tests/integration/test_jobs_api.py -v
+
+# Run tests with debugging
+pytest tests/unit/test_job_service.py -v -s --pdb
+
+# Frontend tests (not yet implemented)
 cd src/frontend
-npm test                   # Run all tests
-npm test -- --watch        # Watch mode for TDD
-npm test -- --coverage     # Coverage report
+npm test
 
-# Extension tests
+# Extension tests (not yet implemented)
 cd src/extension
 npm test
 ```
@@ -93,9 +106,15 @@ Browser Extension ←→ Backend API ←→ Database (PostgreSQL)
                   AI Services
 ```
 
-- **Backend** (`src/backend/`): Python-based API, currently skeleton structure
-- **Frontend** (`src/frontend/`): Node.js web application, currently skeleton structure
-- **Extension** (`src/extension/`): Browser extension for ATS platforms, currently skeleton structure
+- **Backend** (`src/backend/`): FastAPI app with SQLAlchemy 2.0, fully functional
+  - `app/api/v1/endpoints/`: API route handlers (resumes, jobs, applications, cover_letters, search, analytics, auth, health)
+  - `app/services/`: Business logic layer (job_service, application_service, cover_letter_service, search_service, analytics_service)
+  - `app/models/`: SQLAlchemy ORM models (15 tables: users, master_resumes, work_experiences, education, skills, certifications, job_postings, resume_versions, applications, cover_letters, etc.)
+  - `app/schemas/`: Pydantic models for request/response validation
+  - `database/`: Schema SQL + init_db.py script (handles --drop, --seed flags)
+  - `tests/`: Unit (61) + Integration (61) tests = 122 total
+- **Frontend** (`src/frontend/`): React/TypeScript app (skeleton structure, not yet implemented)
+- **Extension** (`src/extension/`): Browser extension (skeleton structure, not yet implemented)
 - **Shared** (`src/shared/`): Common types, interfaces, utilities
 
 ### Key Data Models (Per Requirements)
@@ -130,11 +149,16 @@ Key constraints from [NON_FUNCTIONAL_REQUIREMENTS.md](../NON_FUNCTIONAL_REQUIREM
 ## Development Workflow
 
 ### Project Status
-Currently in **Phase 1 (Foundation)**:
-- Setting up core backend API structure
-- Defining database schema
-- Implementing authentication system
-- Building resume parser
+Currently in **Phase 4 (Search & Analytics)**:
+- ✅ Backend API structure complete
+- ✅ Database schema implemented (15 tables)
+- ✅ Resume management system (Issue #54)
+- ✅ Job posting CRUD (Issue #56 Phase 1)
+- ✅ Application tracking (Issue #56 Phase 2)
+- ✅ Cover letter management (Issue #56 Phase 3)
+- 🚧 Search & analytics (Issue #56 Phase 4 - in progress)
+- ⏳ AI resume tailoring (upcoming)
+- ⏳ Browser extension (upcoming)
 
 ### Tech Stack (Finalized)
 
@@ -200,6 +224,92 @@ cd src/extension && npm test
 
 ---
 
+## Critical Development Patterns
+
+### Service Layer Architecture
+All business logic lives in **service modules**, NOT in API endpoints:
+- **Pattern**: Endpoints validate input → call service method → return response
+- **Services** (`app/services/`): Pure business logic, database operations, complex queries
+- **Endpoints** (`app/api/v1/endpoints/`): HTTP layer only - request/response handling
+
+**Example from job_service.py:**
+```python
+class JobService:
+    @staticmethod
+    async def create_job_posting(db: AsyncSession, user_id: UUID, job_data: JobPostingCreate) -> JobPosting:
+        """Business logic for creating job posting."""
+        # Extract keywords, validate, create model
+        extracted_keywords = JobService.extract_keywords(job_data.job_description)
+        job = JobPosting(user_id=user_id, extracted_keywords=extracted_keywords, ...)
+        db.add(job)
+        await db.commit()
+        return job
+```
+
+**Corresponding endpoint (jobs.py):**
+```python
+@router.post("/", response_model=JobPostingResponse)
+async def create_job(job_data: JobPostingCreate, db: AsyncSession = Depends(get_db), user_id: UUID = Depends(get_current_user_id)):
+    return await JobService.create_job_posting(db, user_id, job_data)
+```
+
+### Database Initialization Script
+`database/init_db.py` is **the single source of truth** for database setup:
+- Reads `.env` from **project root** (not `src/backend/`)
+- Supports `--drop` flag to recreate schema
+- Supports `--seed` flag to add test data
+- **Always use this script** instead of manual SQL or Alembic for fresh setup
+
+**Common usage:**
+```bash
+# Fresh database with seed data
+python database/init_db.py --drop --seed
+
+# Add seed data to existing database
+python database/init_db.py --seed
+```
+
+### Test Fixtures Pattern
+Tests use **pytest fixtures** from `tests/conftest.py`:
+- `db_session`: Async database session (rolled back after each test)
+- `test_user`: Pre-created user for testing
+- `sample_job_posting`, `sample_application`, etc.: Pre-created entities
+
+**Always use fixtures instead of creating data manually:**
+```python
+# ✅ Good
+async def test_get_job(db_session, test_user, sample_job_posting):
+    job = await JobService.get_job_posting(db_session, sample_job_posting.id, test_user.id)
+    assert job.id == sample_job_posting.id
+
+# ❌ Bad - creates duplicate data
+async def test_get_job(db_session):
+    user = User(email="test@example.com")  # Don't do this
+    db_session.add(user)
+```
+
+### Environment Configuration
+- **`.env` file location**: Project root, NOT `src/backend/`
+- **Config loading**: `app/config.py` searches up to project root automatically
+- **Test database**: Uses `{dbname}_test` suffix (e.g., `ai_job_assistant_test`)
+- **Required vars**: `DATABASE_URL`, `DATABASE_ASYNC_URL`, `SECRET_KEY`
+
+### Error Handling Pattern
+Use custom exceptions from `app/core/exceptions.py`:
+```python
+from app.core.exceptions import NotFoundError, ForbiddenError
+
+# In service layer
+if not job:
+    raise NotFoundError(f"Job posting {job_id} not found")
+if job.user_id != user_id:
+    raise ForbiddenError("Cannot access job owned by another user")
+```
+
+These are automatically converted to proper HTTP responses by exception handlers in `main.py`.
+
+---
+
 ## File Structure Quick Reference
 
 ```
@@ -216,10 +326,17 @@ personal-ai-job-assistant/
 │   └── deployment/                 # Deployment guides (TBD)
 ├── src/
 │   ├── backend/
-│   │   ├── app/                    # FastAPI application (TBD)
-│   │   └── database/
-│   │       ├── schema.sql          # Complete PostgreSQL schema
-│   │       └── init_db.py          # Database initialization script
+│   │   ├── app/                    # FastAPI application (functional)
+│   │   │   ├── api/v1/endpoints/   # 8 endpoint modules (55+ routes)
+│   │   │   ├── services/           # 5 service modules (business logic)
+│   │   │   ├── models/             # SQLAlchemy ORM models
+│   │   │   ├── schemas/            # Pydantic validation models
+│   │   │   ├── core/               # Exceptions, middleware, logging
+│   │   │   └── main.py             # FastAPI app initialization
+│   │   ├── database/
+│   │   │   ├── schema.sql          # Complete PostgreSQL schema
+│   │   │   └── init_db.py          # Database initialization script
+│   │   └── tests/                  # 122 tests (61 unit + 61 integration)
 │   ├── frontend/                   # React application (TBD)
 │   ├── extension/                  # Browser extension (TBD)
 │   └── shared/                     # Shared types/utilities (TBD)
@@ -292,6 +409,49 @@ Full schema in [docs/architecture/DATABASE_SCHEMA.md](../docs/architecture/DATAB
 - `tests/e2e/` - Full workflow tests
 - Fixtures in `tests/conftest.py` (test DB session, auth headers, factories)
 - **Target**: 80% coverage minimum (enforced in CI/CD)
+
+**Current Status (Issue #56 - Phases 1-3):**
+- 122 tests passing (61 unit + 61 integration)
+- 85-98% coverage on services and API endpoints
+- Test execution time: ~10-15 seconds for full suite
+
+**Writing Tests - Key Patterns:**
+
+1. **Unit tests** test service methods in isolation:
+```python
+# tests/unit/test_job_service.py
+async def test_create_job_posting(db_session, test_user):
+    job_data = JobPostingCreate(company_name="TechCorp", job_title="Engineer", job_url="https://...")
+    job = await JobService.create_job_posting(db_session, test_user.id, job_data)
+    assert job.company_name == "TechCorp"
+    assert job.user_id == test_user.id
+```
+
+2. **Integration tests** test full HTTP request/response cycle:
+```python
+# tests/integration/test_jobs_api.py
+async def test_create_job_endpoint(async_client, auth_headers):
+    response = await async_client.post(
+        "/api/v1/jobs/",
+        json={"company_name": "TechCorp", "job_title": "Engineer", "job_url": "https://..."},
+        headers=auth_headers
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["company_name"] == "TechCorp"
+```
+
+3. **Use fixtures for common setup:**
+- `db_session`: Isolated database transaction
+- `test_user`: Authenticated user
+- `auth_headers`: Authentication headers for API requests
+- `sample_job_posting`, `sample_application`: Pre-created entities
+
+### Test Database Management
+- Test DB is automatically created with `_test` suffix
+- Each test runs in an isolated transaction (rolled back after test)
+- Use `db_session` fixture, never create your own engine
+- Seed data available via `--seed` flag in init_db.py
 
 **Frontend Testing** (Vitest + Testing Library):
 - Co-located tests: `src/components/__tests__/ComponentName.test.tsx`

@@ -78,7 +78,9 @@ class JobPosting(Base):
     job_title: Mapped[str] = mapped_column(String(255), nullable=False)
     job_url: Mapped[str] = mapped_column(Text, nullable=False)
     source: Mapped[JobSource] = mapped_column(
-        Enum(JobSource, name="job_source"), default=JobSource.MANUAL, nullable=False
+        Enum(JobSource, name="job_source", values_callable=lambda x: [e.value for e in x]),
+        default=JobSource.MANUAL,
+        nullable=False,
     )
 
     # Job details

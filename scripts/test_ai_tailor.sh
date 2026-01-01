@@ -19,18 +19,16 @@ fi
 echo "✅ Resume ID: $RESUME_ID"
 echo "✅ Job ID: $JOB_ID"
 
-# Get auth token (assuming you have test user credentials)
+# Check if TOKEN is already set
 if [ -z "$TOKEN" ]; then
-    echo "🔐 Getting auth token..."
-    TOKEN=$(curl -s -X POST "http://localhost:8000/api/v1/auth/login" \
-        -H "Content-Type: application/json" \
-        -d '{"email": "user@example.com", "password": "securepassword123"}' | jq -r '.access_token')
-    
-    if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
-        echo "❌ Failed to get auth token"
-        exit 1
-    fi
-    echo "✅ Auth token obtained"
+    echo "❌ TOKEN environment variable not set"
+    echo "💡 Please set TOKEN first:"
+    echo "   export TOKEN=\$(curl -s -X POST 'http://localhost:8000/api/v1/auth/login' \\"
+    echo "     -H 'Content-Type: application/json' \\"
+    echo "     -d '{\"email\": \"your-email@example.com\", \"password\": \"your-password\"}' | jq -r '.access_token')"
+    exit 1
+else
+    echo "✅ Using existing TOKEN"
 fi
 
 echo ""

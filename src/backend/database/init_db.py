@@ -185,58 +185,192 @@ async def seed_data(engine):
 
         # Create default prompt templates
         prompts = [
+            # Backend Engineer Templates
             {
                 "task": "resume_tailor",
                 "role": "backend_engineer",
-                "name": "Backend Engineer Resume Optimization",
-                "prompt": """
-You are an expert resume writer specializing in backend engineering roles.
+                "name": "Backend Engineer Resume Optimizer",
+                "prompt": """You are an expert resume writer specializing in backend engineering positions at top tech companies. Your goal is to optimize the candidate's resume for a specific job posting while maintaining authenticity and ATS compatibility.
 
-Your task: Optimize this resume for a backend engineering position at a tech company.
+ROLE CONTEXT:
+- Target Role: Backend Engineer / Senior Backend Engineer
+- Key Technologies: [Will be extracted from job description]
+- Optimization Goal: Maximize relevance and impact
 
-Guidelines:
-- Emphasize backend technologies, system design, and scalability
-- Quantify achievements with metrics (e.g., "reduced latency by 40%")
-- Use strong action verbs (designed, implemented, optimized, architected)
-- Highlight relevant technologies from the job description
-- Maintain executive-level professional tone
-- Keep bullet points concise and impactful
+OPTIMIZATION GUIDELINES:
 
-Master Resume:
-{master_resume}
+1. Impact & Metrics (Highest Priority):
+   - Quantify every achievement with specific numbers
+   - Scale: users served, requests handled, data volume processed
+   - Performance: latency improvements, throughput gains, cost reductions
+   - Team impact: people mentored, cross-functional collaborations
 
-Job Description:
-{job_description}
+2. Technical Skills Alignment:
+   - Match job requirements with candidate's experience
+   - Highlight relevant languages, frameworks, and tools
+   - Emphasize distributed systems, scalability, and performance work
+   - Showcase system design and architecture experience
 
-Return the optimized resume as JSON with the same structure as the input.""",
+3. Executive Positioning:
+   - Use strong action verbs: Architected, Scaled, Optimized, Led, Designed
+   - Focus on business impact alongside technical achievements
+   - Demonstrate problem-solving and technical leadership
+
+4. ATS Optimization:
+   - Include exact keyword matches from job description
+   - Use standard section headers (Work Experience, Education, Technical Skills)
+   - Maintain consistent formatting
+
+5. Content Strategy:
+   - Reorder bullet points by relevance to target role
+   - Expand highly relevant experience, condense less relevant
+   - Add context for lesser-known companies or projects
+
+INPUT:
+Master Resume: {master_resume}
+Job Description: {job_description}
+Target Company: {company_name}
+
+OUTPUT FORMAT:
+Return optimized resume as JSON with this structure:
+{
+  "summary": "2-3 sentence executive summary tailored to role",
+  "work_experience": [...],
+  "skills": {...},
+  "education": [...],
+  "changes_made": ["Explanation of major changes..."]
+}
+
+CRITICAL RULES:
+- NEVER fabricate experience, dates, or achievements
+- NEVER change company names or employment dates
+- MAINTAIN factual accuracy - all claims must be defensible""",
             },
             {
                 "task": "cover_letter",
                 "role": "backend_engineer",
                 "name": "Backend Engineer Cover Letter",
-                "prompt": """You are an expert career advisor writing executive-level cover letters.
+                "prompt": """You are an expert cover letter writer specializing in executive-level communication for backend engineering roles. Craft a compelling, personalized cover letter that demonstrates genuine interest and strong fit.
 
-Your task: Write a persuasive cover letter for this backend engineering position.
+INPUT CONTEXT:
+- Candidate Background: {resume_summary}
+- Target Company: {company_name}
+- Target Role: {job_title}
+- Job Description: {job_description}
 
-Guidelines:
-- Professional, confident tone (not overly formal or casual)
-- 3-4 paragraphs maximum
-- Opening: Express genuine interest in the company/role
-- Body: Highlight 2-3 relevant achievements with impact
-- Closing: Strong call to action
-- Avoid clichés like "I am a perfect fit" or "I am passionate"
-- Show, don't tell (use specific examples)
+STRUCTURE:
 
-Candidate Resume:
-{resume}
+Opening (2-3 sentences):
+- Strong hook showing genuine interest in company's mission/products
+- Brief relevant background statement
+- Clear intent to apply for specific role
 
-Job Description:
-{job_description}
+Body Paragraph 1 - Relevant Experience:
+- 1-2 most impressive achievements directly relevant to role
+- Specific technical examples with quantifiable results
+- Demonstrate understanding of role's technical challenges
 
-Company Info:
-{company_name}
+Body Paragraph 2 - Company Alignment:
+- Research into company culture, products, engineering blog
+- Connect personal interests to company's mission
+- Explain why THIS opportunity specifically
 
-Return the cover letter as plain text (no JSON).""",
+Body Paragraph 3 - Unique Value:
+- What you uniquely bring beyond resume
+- Leadership, mentorship, or collaboration examples
+- Forward-looking vision for impact
+
+Closing:
+- Confident expression of interest
+- Thank you for consideration
+
+GUIDELINES:
+- Tone: Professional, confident, enthusiastic (not desperate)
+- Length: 300-400 words (3-4 paragraphs)
+- Specificity: Use company name, specific products, role title
+- Authenticity: Avoid generic praise
+
+AVOID:
+- Clichés like "I am a perfect fit"
+- Restating entire resume
+- Desperate or apologetic language
+- Typos or formatting errors
+
+OUTPUT: Complete cover letter as plain text, ready for submission.""",
+            },
+            # Data Scientist Template
+            {
+                "task": "resume_tailor",
+                "role": "data_scientist",
+                "name": "Data Scientist Resume Optimizer",
+                "prompt": """You are an expert resume writer specializing in data science and machine learning positions. Optimize this resume for maximum impact.
+
+OPTIMIZATION FOCUS:
+
+1. Quantifiable Impact:
+   - Model performance: accuracy, precision, recall, F1, AUC improvements
+   - Business metrics: revenue impact, cost savings, efficiency gains
+   - Scale: dataset sizes, processing throughput
+
+2. Technical Skills:
+   - ML frameworks: TensorFlow, PyTorch, scikit-learn
+   - Programming: Python, R, SQL
+   - Data engineering: Spark, Airflow, Kafka
+   - Cloud ML: AWS SageMaker, GCP Vertex AI, Azure ML
+
+3. Research & Academic:
+   - Publications, conferences, patents
+   - Kaggle competitions
+   - Open-source contributions
+
+INPUT:
+Master Resume: {master_resume}
+Job Description: {job_description}
+
+OUTPUT: Optimized resume as JSON emphasizing data-driven achievements.
+
+RULES: Never exaggerate metrics, distinguish personal vs team contributions.""",
+            },
+            # Full Stack Template
+            {
+                "task": "resume_tailor",
+                "role": "fullstack_engineer",
+                "name": "Full Stack Engineer Resume Optimizer",
+                "prompt": """You are an expert resume writer for full stack positions. Optimize to showcase both frontend and backend expertise.
+
+FOCUS:
+- Frontend: React, Vue, Angular, TypeScript, responsive design
+- Backend: Node.js, Python, Java, databases, APIs, microservices
+- DevOps: CI/CD, Docker, Kubernetes
+- End-to-end feature ownership
+
+INPUT:
+Master Resume: {master_resume}
+Job Description: {job_description}
+
+OUTPUT: Optimized resume as JSON with balanced full-stack emphasis.""",
+            },
+            # Generic Fallback
+            {
+                "task": "resume_tailor",
+                "role": None,
+                "name": "General Professional Resume Optimizer",
+                "prompt": """You are an expert resume writer optimizing for any professional role. Tailor this resume to the specific job description.
+
+UNIVERSAL GUIDELINES:
+1. Achievement Focus: Every bullet demonstrates impact
+2. Quantification: Use numbers, percentages, scales
+3. Action Verbs: Led, Developed, Achieved, Optimized
+4. Relevance: Prioritize experience matching job
+5. ATS Optimization: Include keywords naturally
+6. Professional Tone: Executive-level confidence
+
+INPUT:
+Master Resume: {master_resume}
+Job Description: {job_description}
+
+OUTPUT: Optimized resume as JSON.
+MAINTAIN: Factual accuracy, original dates, verifiable claims.""",
             },
         ]
 

@@ -239,6 +239,58 @@ class TestErrorHandling:
         with pytest.raises(AIProviderError):
             await openai_provider.generate_completion("Test prompt")
 
+    @pytest.mark.asyncio
+    async def test_generic_error_with_retry(self, openai_provider, mock_completion):
+        """Test generic error retries then succeeds."""
+        completion = mock_completion()
+
+        # Fail twice with generic error, then succeed
+        openai_provider.client.chat.completions.create = AsyncMock(
+            side_effect=[
+                Exception("Network error"),
+                Exception("Timeout"),
+                completion,
+            ]
+        )
+
+        response = await openai_provider.generate_completion("Test prompt")
+        assert response.content == "Test response"
+        assert openai_provider.client.chat.completions.create.call_count == 3
+
+    @pytest.mark.asyncio
+    async def test_bad_request_error(self, openai_provider):
+        """Test generic bad request error."""
+        openai_provider.client.chat.completions.create = AsyncMock(
+            side_effect=BadRequestError("Invalid parameters", response=MagicMock(), body=None)
+        )
+
+        with pytest.raises(AIProviderError):
+            await openai_provider.generate_completion("Test prompt")
+
+    @pytest.mark.asyncio
+    async def test_missing_usage_data(self, openai_provider):
+        """Test error when OpenAI response has no usage data."""
+        # Create completion without usage data
+        completion = ChatCompletion(
+            id="chatcmpl-123",
+            object="chat.completion",
+            created=1677652288,
+            model="gpt-4",
+            choices=[
+                Choice(
+                    index=0,
+                    message=ChatCompletionMessage(role="assistant", content="Test"),
+                    finish_reason="stop",
+                )
+            ],
+            usage=None,  # Missing usage data
+        )
+
+        openai_provider.client.chat.completions.create = AsyncMock(return_value=completion)
+
+        with pytest.raises(AIProviderError, match="No usage data"):
+            await openai_provider.generate_completion("Test prompt")
+
 
 class TestResumeTailoring:
     """Test tailor_resume method."""

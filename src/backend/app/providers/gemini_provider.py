@@ -177,9 +177,12 @@ class GeminiProvider(AIProvider):
 
             except Exception as e:
                 error_msg = str(e).lower()
+                
+                # Log full error for debugging
+                logger.error(f"Gemini API error (attempt {retry_count + 1}/{max_retries}): {type(e).__name__}: {e}")
 
                 # Handle specific errors
-                if "quota" in error_msg or "rate" in error_msg:
+                if "quota" in error_msg or "rate" in error_msg or "429" in error_msg or "resource_exhausted" in error_msg:
                     if retry_count < max_retries:
                         wait_time = 2**retry_count
                         logger.warning(
@@ -188,19 +191,20 @@ class GeminiProvider(AIProvider):
                         await asyncio.sleep(wait_time)
                         retry_count += 1
                         continue
-                    raise RateLimitError("Gemini API rate limit exceeded")
+                    logger.error(f"Gemini rate limit exceeded after {max_retries} retries. Full error: {e}")
+                    raise RateLimitError(f"Gemini API rate limit exceeded: {e}")
 
-                elif "invalid" in error_msg and "key" in error_msg:
-                    raise InvalidAPIKeyError("Invalid Gemini API key")
+                elif "invalid" in error_msg and ("key" in error_msg or "api_key" in error_msg or "api key" in error_msg):
+                    raise InvalidAPIKeyError(f"Invalid Gemini API key: {e}")
 
-                elif "not found" in error_msg or "model" in error_msg:
-                    raise ModelNotFoundError(f"Model '{config.model}' not found")
+                elif "not found" in error_msg or ("model" in error_msg and "not" in error_msg):
+                    raise ModelNotFoundError(f"Model '{config.model}' not found: {e}")
 
                 elif "token" in error_msg and "limit" in error_msg:
-                    raise TokenLimitExceededError("Token limit exceeded")
+                    raise TokenLimitExceededError(f"Token limit exceeded: {e}")
 
                 else:
-                    logger.error(f"Gemini API error: {e}")
+                    logger.error(f"Unhandled Gemini API error: {type(e).__name__}: {e}")
                     raise AIProviderError(f"Gemini API call failed: {e}")
 
         raise AIProviderError("Max retries exceeded")

@@ -8,8 +8,8 @@ echo "🔍 Setting up test data..."
 # Set the job ID from your database query
 JOB_ID="33176128-a18c-4675-95fd-607e1f7b6e5d"
 
-# Get the resume ID from database
-RESUME_ID=$(psql -U ai_job_assistant -d ai_job_assistant -t -c "SELECT id FROM master_resumes WHERE deleted_at IS NULL LIMIT 1;" | xargs)
+# Get the resume ID from database (use default peer authentication)
+RESUME_ID=$(psql -d ai_job_assistant -t -c "SELECT id FROM master_resumes WHERE deleted_at IS NULL LIMIT 1;" | xargs)
 
 if [ -z "$RESUME_ID" ]; then
     echo "❌ No resume found in database"

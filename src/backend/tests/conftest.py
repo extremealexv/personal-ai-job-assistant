@@ -551,6 +551,41 @@ async def other_user(db_session):
     return other
 
 
+@pytest.fixture
+async def other_user_job(db_session, other_user):
+    """Create a job posting for the other user."""
+    from app.models.job import JobPosting, JobStatus
+    
+    job = JobPosting(
+        user_id=other_user.id,
+        company_name="Other Company",
+        job_title="Other Role",
+        job_url="https://example.com/other-job",
+        status=JobStatus.SAVED,
+    )
+    db_session.add(job)
+    await db_session.commit()
+    await db_session.refresh(job)
+    return job
+
+
+@pytest.fixture
+async def other_user_application(db_session, other_user, other_user_job, sample_resume_version):
+    """Create an application for the other user."""
+    from app.models.job import Application, ApplicationStatus
+    
+    app = Application(
+        user_id=other_user.id,
+        job_posting_id=other_user_job.id,
+        resume_version_id=sample_resume_version.id,
+        status=ApplicationStatus.SUBMITTED,
+    )
+    db_session.add(app)
+    await db_session.commit()
+    await db_session.refresh(app)
+    return app
+
+
 # ================================================================================
 # Cover Letter Fixtures
 # ================================================================================

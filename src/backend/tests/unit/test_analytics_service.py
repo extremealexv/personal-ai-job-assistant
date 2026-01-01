@@ -15,20 +15,20 @@ class TestAnalyticsService:
     """Test analytics service functionality."""
 
     async def test_get_dashboard_summary_empty(
-        self, db_session, sample_user
+        self, db_session, test_user
     ):
         """Test dashboard with no data."""
-        summary = await AnalyticsService.get_dashboard_summary(db_session, sample_user.id)
+        summary = await AnalyticsService.get_dashboard_summary(db_session, test_user.id)
         
         assert summary.total_jobs == 0
         assert summary.total_applications == 0
         assert summary.total_cover_letters == 0
 
     async def test_get_dashboard_summary_with_data(
-        self, db_session, sample_user, sample_job_posting, sample_application, sample_cover_letter
+        self, db_session, test_user, sample_job_posting, sample_application, sample_cover_letter
     ):
         """Test dashboard with actual data."""
-        summary = await AnalyticsService.get_dashboard_summary(db_session, sample_user.id)
+        summary = await AnalyticsService.get_dashboard_summary(db_session, test_user.id)
         
         assert summary.total_jobs >= 1
         assert summary.total_applications >= 1
@@ -36,12 +36,12 @@ class TestAnalyticsService:
         assert summary.avg_interest_level > 0
 
     async def test_dashboard_job_statistics(
-        self, db_session, sample_user
+        self, db_session, test_user
     ):
         """Test job statistics in dashboard."""
         # Create jobs with different statuses
         job1 = JobPosting(
-            user_id=sample_user.id,
+            user_id=test_user.id,
             company_name="Company 1",
             job_title="Job 1",
             job_url="https://example.com/1",
@@ -49,7 +49,7 @@ class TestAnalyticsService:
             interest_level=5,
         )
         job2 = JobPosting(
-            user_id=sample_user.id,
+            user_id=test_user.id,
             company_name="Company 2",
             job_title="Job 2",
             job_url="https://example.com/2",
@@ -59,7 +59,7 @@ class TestAnalyticsService:
         db_session.add_all([job1, job2])
         await db_session.commit()
         
-        summary = await AnalyticsService.get_dashboard_summary(db_session, sample_user.id)
+        summary = await AnalyticsService.get_dashboard_summary(db_session, test_user.id)
         
         assert summary.total_jobs == 2
         assert JobStatus.SAVED in summary.jobs_by_status
@@ -67,26 +67,26 @@ class TestAnalyticsService:
         assert summary.avg_interest_level == 4.5
 
     async def test_dashboard_application_rates(
-        self, db_session, sample_user, sample_job_posting, sample_resume_version
+        self, db_session, test_user, sample_job_posting, sample_resume_version
     ):
         """Test application success rate calculations."""
         # Create applications with different statuses
         app1 = Application(
-            user_id=sample_user.id,
+            user_id=test_user.id,
             job_posting_id=sample_job_posting.id,
             resume_version_id=sample_resume_version.id,
             status=ApplicationStatus.SUBMITTED,
             submitted_at=datetime.utcnow(),
         )
         app2 = Application(
-            user_id=sample_user.id,
+            user_id=test_user.id,
             job_posting_id=sample_job_posting.id,
             resume_version_id=sample_resume_version.id,
             status=ApplicationStatus.PHONE_SCREEN,
             submitted_at=datetime.utcnow(),
         )
         app3 = Application(
-            user_id=sample_user.id,
+            user_id=test_user.id,
             job_posting_id=sample_job_posting.id,
             resume_version_id=sample_resume_version.id,
             status=ApplicationStatus.OFFER,
@@ -95,7 +95,7 @@ class TestAnalyticsService:
         db_session.add_all([app1, app2, app3])
         await db_session.commit()
         
-        summary = await AnalyticsService.get_dashboard_summary(db_session, sample_user.id)
+        summary = await AnalyticsService.get_dashboard_summary(db_session, test_user.id)
         
         assert summary.total_applications == 3
         # Response rate: 2/3 (phone_screen and offer responded)
@@ -106,12 +106,12 @@ class TestAnalyticsService:
         assert summary.offer_rate > 0
 
     async def test_dashboard_time_based_metrics(
-        self, db_session, sample_user, sample_job_posting, sample_resume_version
+        self, db_session, test_user, sample_job_posting, sample_resume_version
     ):
         """Test time-based application metrics."""
         # Create application in last 7 days
         recent_app = Application(
-            user_id=sample_user.id,
+            user_id=test_user.id,
             job_posting_id=sample_job_posting.id,
             resume_version_id=sample_resume_version.id,
             status=ApplicationStatus.SUBMITTED,
@@ -119,7 +119,7 @@ class TestAnalyticsService:
         )
         # Create application in last 30 days
         older_app = Application(
-            user_id=sample_user.id,
+            user_id=test_user.id,
             job_posting_id=sample_job_posting.id,
             resume_version_id=sample_resume_version.id,
             status=ApplicationStatus.SUBMITTED,
@@ -128,19 +128,19 @@ class TestAnalyticsService:
         db_session.add_all([recent_app, older_app])
         await db_session.commit()
         
-        summary = await AnalyticsService.get_dashboard_summary(db_session, sample_user.id)
+        summary = await AnalyticsService.get_dashboard_summary(db_session, test_user.id)
         
         assert summary.applications_last_7_days >= 1
         assert summary.applications_last_30_days >= 2
 
     async def test_get_timeline_data_default_range(
-        self, db_session, sample_user, sample_job_posting, sample_resume_version
+        self, db_session, test_user, sample_job_posting, sample_resume_version
     ):
         """Test timeline data with default date range."""
         # Create applications at different dates
         for days_ago in [5, 10, 15]:
             app = Application(
-                user_id=sample_user.id,
+                user_id=test_user.id,
                 job_posting_id=sample_job_posting.id,
                 resume_version_id=sample_resume_version.id,
                 status=ApplicationStatus.SUBMITTED,
@@ -154,7 +154,7 @@ class TestAnalyticsService:
             granularity="day",
         )
         
-        timeline = await AnalyticsService.get_timeline_data(db_session, sample_user.id, params)
+        timeline = await AnalyticsService.get_timeline_data(db_session, test_user.id, params)
         
         assert timeline.total >= 3
         assert len(timeline.data_points) >= 3
@@ -162,7 +162,7 @@ class TestAnalyticsService:
         assert timeline.granularity == "day"
 
     async def test_get_timeline_data_custom_range(
-        self, db_session, sample_user, sample_job_posting, sample_resume_version
+        self, db_session, test_user, sample_job_posting, sample_resume_version
     ):
         """Test timeline with custom date range."""
         start_date = date.today() - timedelta(days=30)
@@ -175,19 +175,19 @@ class TestAnalyticsService:
             granularity="week",
         )
         
-        timeline = await AnalyticsService.get_timeline_data(db_session, sample_user.id, params)
+        timeline = await AnalyticsService.get_timeline_data(db_session, test_user.id, params)
         
         assert timeline.start_date == start_date
         assert timeline.end_date == end_date
 
     async def test_timeline_cumulative_counts(
-        self, db_session, sample_user, sample_job_posting, sample_resume_version
+        self, db_session, test_user, sample_job_posting, sample_resume_version
     ):
         """Test cumulative counts in timeline."""
         # Create applications on same day
         for i in range(3):
             app = Application(
-                user_id=sample_user.id,
+                user_id=test_user.id,
                 job_posting_id=sample_job_posting.id,
                 resume_version_id=sample_resume_version.id,
                 status=ApplicationStatus.SUBMITTED,
@@ -201,7 +201,7 @@ class TestAnalyticsService:
             granularity="day",
         )
         
-        timeline = await AnalyticsService.get_timeline_data(db_session, sample_user.id, params)
+        timeline = await AnalyticsService.get_timeline_data(db_session, test_user.id, params)
         
         # Cumulative should increase with each data point
         if len(timeline.data_points) > 1:
@@ -209,10 +209,10 @@ class TestAnalyticsService:
                 assert timeline.data_points[i + 1].cumulative >= timeline.data_points[i].cumulative
 
     async def test_get_performance_metrics_empty(
-        self, db_session, sample_user
+        self, db_session, test_user
     ):
         """Test performance metrics with no applications."""
-        metrics = await AnalyticsService.get_performance_metrics(db_session, sample_user.id)
+        metrics = await AnalyticsService.get_performance_metrics(db_session, test_user.id)
         
         assert metrics.total_applications == 0
         assert metrics.response_rate == 0.0
@@ -220,7 +220,7 @@ class TestAnalyticsService:
         assert metrics.offer_rate == 0.0
 
     async def test_get_performance_metrics_with_data(
-        self, db_session, sample_user, sample_job_posting, sample_resume_version
+        self, db_session, test_user, sample_job_posting, sample_resume_version
     ):
         """Test performance metrics calculation."""
         # Create varied applications
@@ -233,7 +233,7 @@ class TestAnalyticsService:
         
         for status in statuses:
             app = Application(
-                user_id=sample_user.id,
+                user_id=test_user.id,
                 job_posting_id=sample_job_posting.id,
                 resume_version_id=sample_resume_version.id,
                 status=status,
@@ -242,7 +242,7 @@ class TestAnalyticsService:
             db_session.add(app)
         await db_session.commit()
         
-        metrics = await AnalyticsService.get_performance_metrics(db_session, sample_user.id)
+        metrics = await AnalyticsService.get_performance_metrics(db_session, test_user.id)
         
         assert metrics.total_applications == 4
         assert metrics.total_responses >= 2
@@ -253,7 +253,7 @@ class TestAnalyticsService:
         assert 0 <= metrics.offer_rate <= 100
 
     async def test_performance_top_companies(
-        self, db_session, sample_user, sample_resume_version
+        self, db_session, test_user, sample_resume_version
     ):
         """Test top companies by application count."""
         # Create jobs and applications for different companies
@@ -261,7 +261,7 @@ class TestAnalyticsService:
         
         for company in companies:
             job = JobPosting(
-                user_id=sample_user.id,
+                user_id=test_user.id,
                 company_name=company,
                 job_title="Engineer",
                 job_url=f"https://example.com/{company}",
@@ -270,7 +270,7 @@ class TestAnalyticsService:
             await db_session.flush()
             
             app = Application(
-                user_id=sample_user.id,
+                user_id=test_user.id,
                 job_posting_id=job.id,
                 resume_version_id=sample_resume_version.id,
                 status=ApplicationStatus.SUBMITTED,
@@ -279,7 +279,7 @@ class TestAnalyticsService:
             db_session.add(app)
         await db_session.commit()
         
-        metrics = await AnalyticsService.get_performance_metrics(db_session, sample_user.id)
+        metrics = await AnalyticsService.get_performance_metrics(db_session, test_user.id)
         
         assert len(metrics.top_companies) >= 2
         # Company A should have most applications
@@ -287,24 +287,24 @@ class TestAnalyticsService:
         assert metrics.top_companies[0]["applications"] == 2
 
     async def test_get_funnel_analysis_empty(
-        self, db_session, sample_user
+        self, db_session, test_user
     ):
         """Test funnel with no data."""
-        funnel = await AnalyticsService.get_funnel_analysis(db_session, sample_user.id)
+        funnel = await AnalyticsService.get_funnel_analysis(db_session, test_user.id)
         
         assert funnel.total_jobs == 0
         assert len(funnel.stages) == 5
         assert all(stage.count == 0 for stage in funnel.stages)
 
     async def test_get_funnel_analysis_with_data(
-        self, db_session, sample_user, sample_resume_version
+        self, db_session, test_user, sample_resume_version
     ):
         """Test funnel conversion tracking."""
         # Create 10 saved jobs
         jobs = []
         for i in range(10):
             job = JobPosting(
-                user_id=sample_user.id,
+                user_id=test_user.id,
                 company_name=f"Company {i}",
                 job_title="Engineer",
                 job_url=f"https://example.com/{i}",
@@ -317,7 +317,7 @@ class TestAnalyticsService:
         # Apply to 5 jobs
         for i in range(5):
             app = Application(
-                user_id=sample_user.id,
+                user_id=test_user.id,
                 job_posting_id=jobs[i].id,
                 resume_version_id=sample_resume_version.id,
                 status=ApplicationStatus.SUBMITTED,
@@ -334,7 +334,7 @@ class TestAnalyticsService:
         
         await db_session.commit()
         
-        funnel = await AnalyticsService.get_funnel_analysis(db_session, sample_user.id)
+        funnel = await AnalyticsService.get_funnel_analysis(db_session, test_user.id)
         
         assert funnel.total_jobs == 10
         assert funnel.stages[0].stage == "Saved"
@@ -345,12 +345,12 @@ class TestAnalyticsService:
         assert funnel.stages[2].count >= 2
 
     async def test_funnel_conversion_rates(
-        self, db_session, sample_user, sample_job_posting, sample_resume_version
+        self, db_session, test_user, sample_job_posting, sample_resume_version
     ):
         """Test funnel stage conversion rate calculations."""
         # Create application that progressed through funnel
         app = Application(
-            user_id=sample_user.id,
+            user_id=test_user.id,
             job_posting_id=sample_job_posting.id,
             resume_version_id=sample_resume_version.id,
             status=ApplicationStatus.OFFER,
@@ -359,7 +359,7 @@ class TestAnalyticsService:
         db_session.add(app)
         await db_session.commit()
         
-        funnel = await AnalyticsService.get_funnel_analysis(db_session, sample_user.id)
+        funnel = await AnalyticsService.get_funnel_analysis(db_session, test_user.id)
         
         # Check conversion rates are percentages
         for stage in funnel.stages:
@@ -368,7 +368,7 @@ class TestAnalyticsService:
                 assert 0 <= stage.conversion_from_previous <= 100
 
     async def test_analytics_user_isolation(
-        self, db_session, sample_user, other_user, sample_resume_version
+        self, db_session, test_user, other_user, sample_resume_version
     ):
         """Test analytics only show user's own data."""
         # Create job and application for other user
@@ -391,8 +391,8 @@ class TestAnalyticsService:
         db_session.add(other_app)
         await db_session.commit()
         
-        # Get analytics for sample_user
-        summary = await AnalyticsService.get_dashboard_summary(db_session, sample_user.id)
+        # Get analytics for test_user
+        summary = await AnalyticsService.get_dashboard_summary(db_session, test_user.id)
         
         # Should not include other user's data
         assert summary.total_jobs == 0

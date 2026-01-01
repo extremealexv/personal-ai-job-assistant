@@ -263,10 +263,6 @@ class OpenAIProvider(AIProvider):
             logger.warning(warning)
 
         return response
-            f"Cost: ${response.usage.estimated_cost:.4f}"
-        )
-
-        return response
 
     async def tailor_resume(
         self,

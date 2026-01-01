@@ -98,6 +98,7 @@ class AIResumeTailoringService:
                 .where(PromptTemplate.task_type == PromptTask.RESUME_TAILOR)
                 .where(PromptTemplate.is_active == True)
                 .order_by(PromptTemplate.created_at.desc())
+                .limit(1)
             )
             prompt_template = result.scalar_one_or_none()
 

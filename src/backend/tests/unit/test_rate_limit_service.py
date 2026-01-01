@@ -125,11 +125,11 @@ class TestDailyRateLimit:
         rate_limiter._rate_limits[user_key]["day"] = yesterday
         rate_limiter._rate_limits[user_key]["daily_requests"] = 100  # Set to high number
 
-        # Check limit (should reset)
+        # Check limit (should reset during check_rate_limit)
         await rate_limiter.check_rate_limit(user_id)
 
-        # Verify reset
-        assert rate_limiter._rate_limits[user_key]["daily_requests"] == 100  # Not reset until record_request
+        # Verify reset happened during check_rate_limit
+        assert rate_limiter._rate_limits[user_key]["daily_requests"] == 0
 
 
 class TestOldRequestCleanup:

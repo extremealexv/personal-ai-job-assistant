@@ -396,6 +396,13 @@ class TestEmailClassification:
     @pytest.mark.asyncio
     async def test_classify_interview_email(self, openai_provider, mock_completion):
         """Test classifying an interview email."""
+        from app.services.rate_limit_service import rate_limit_service
+        from app.services.cost_tracking_service import cost_tracking_service
+
+        # Reset services to avoid rate limit from previous tests
+        rate_limit_service._rate_limits.clear()
+        cost_tracking_service._cost_cache.clear()
+
         completion = mock_completion(content="interview", model="gpt-3.5-turbo")
         openai_provider.client.chat.completions.create = AsyncMock(return_value=completion)
 
@@ -414,6 +421,13 @@ class TestEmailClassification:
     @pytest.mark.asyncio
     async def test_classify_rejection_email(self, openai_provider, mock_completion):
         """Test classifying a rejection email."""
+        from app.services.rate_limit_service import rate_limit_service
+        from app.services.cost_tracking_service import cost_tracking_service
+
+        # Reset services to avoid rate limit from previous tests
+        rate_limit_service._rate_limits.clear()
+        cost_tracking_service._cost_cache.clear()
+
         completion = mock_completion(content="rejection", model="gpt-3.5-turbo")
         openai_provider.client.chat.completions.create = AsyncMock(return_value=completion)
 
@@ -429,6 +443,13 @@ class TestEmailClassification:
         self, openai_provider, mock_completion
     ):
         """Test invalid classification defaults to 'other'."""
+        from app.services.rate_limit_service import rate_limit_service
+        from app.services.cost_tracking_service import cost_tracking_service
+
+        # Reset services to avoid rate limit from previous tests
+        rate_limit_service._rate_limits.clear()
+        cost_tracking_service._cost_cache.clear()
+
         completion = mock_completion(content="invalid_category", model="gpt-3.5-turbo")
         openai_provider.client.chat.completions.create = AsyncMock(return_value=completion)
 

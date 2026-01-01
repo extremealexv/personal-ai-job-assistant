@@ -174,6 +174,7 @@ CREATE TABLE skills (
     display_order INT DEFAULT 0,
     
     created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     
     CONSTRAINT valid_experience_years CHECK (years_of_experience IS NULL OR years_of_experience >= 0)
 );

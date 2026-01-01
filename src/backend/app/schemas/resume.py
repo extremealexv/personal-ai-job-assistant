@@ -328,3 +328,22 @@ class CertificationListResponse(BaseSchema):
 
     items: list[CertificationResponse]
     total: int
+
+
+# ============================================================================
+# AI Resume Tailoring
+# ============================================================================
+
+
+class ResumeTailoringRequest(BaseSchema):
+    """Schema for AI resume tailoring request."""
+
+    master_resume_id: UUID = Field(..., description="Master resume to tailor")
+    job_posting_id: UUID = Field(..., description="Target job posting")
+    prompt_template_id: Optional[UUID] = Field(
+        None, description="Custom prompt template (uses default if not provided)"
+    )
+    version_name: Optional[str] = Field(
+        None, description="Custom name for the tailored version"
+    )
+

@@ -275,11 +275,28 @@ class OpenAIProvider(AIProvider):
     ) -> AIResponse:
         """Tailor a resume for a specific job using OpenAI."""
         # Format the prompt with actual data
-        prompt = prompt_template.format(
-            master_resume=json.dumps(master_resume, indent=2),
-            job_description=job_description,
-            company_name=company_name or "the company",
-        )
+        # Use safe_substitute to avoid KeyError on unescaped braces
+        try:
+            from string import Template
+            
+            resume_json = json.dumps(master_resume, indent=2)
+            logger.debug(f"Resume JSON length: {len(resume_json)}")
+            
+            # Replace format-style placeholders with Template-style
+            template_str = prompt_template.replace("{master_resume}", "$master_resume")
+            template_str = template_str.replace("{job_description}", "$job_description")
+            template_str = template_str.replace("{company_name}", "$company_name")
+            
+            template = Template(template_str)
+            prompt = template.safe_substitute(
+                master_resume=resume_json,
+                job_description=job_description,
+                company_name=company_name or "the company",
+            )
+        except Exception as e:
+            logger.error(f"Failed to format prompt template: {e}")
+            logger.error(f"Prompt template: {prompt_template[:200]}")
+            raise AIProviderError(f"Failed to format resume tailoring prompt: {e}")
 
         # System prompt for resume tailoring
         system_prompt = (

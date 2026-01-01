@@ -53,7 +53,8 @@ class InterviewEvent(Base):
 
     # Interview details
     interview_type: Mapped[InterviewType] = mapped_column(
-        Enum(InterviewType, name="interview_type"), nullable=False
+        Enum(InterviewType, name="interview_type", values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
     )
     scheduled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     duration_minutes: Mapped[int] = mapped_column(Integer, default=60, nullable=False)

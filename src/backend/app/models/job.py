@@ -100,7 +100,9 @@ class JobPosting(Base):
 
     # Status tracking
     status: Mapped[JobStatus] = mapped_column(
-        Enum(JobStatus, name="job_status"), default=JobStatus.SAVED, nullable=False
+        Enum(JobStatus, name="job_status", values_callable=lambda x: [e.value for e in x]),
+        default=JobStatus.SAVED,
+        nullable=False,
     )
     status_updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default="now()", nullable=False
@@ -155,7 +157,7 @@ class Application(Base):
 
     # Status tracking
     status: Mapped[ApplicationStatus] = mapped_column(
-        Enum(ApplicationStatus, name="application_status"),
+        Enum(ApplicationStatus, name="application_status", values_callable=lambda x: [e.value for e in x]),
         default=ApplicationStatus.DRAFT,
         nullable=False,
     )

@@ -109,7 +109,9 @@ class TestRegistration:
         assert "password" not in data
         assert "password_hash" not in data
         
-        # Verify user was created in database
+        # Verify user was created in database  
+        # Need to expire session cache to see committed changes
+        db_session.expire_all()
         result = await db_session.execute(
             select(User).where(User.email == test_user_data["email"])
         )

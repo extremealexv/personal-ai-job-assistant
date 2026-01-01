@@ -5,8 +5,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user_id, get_db
+from app.api.deps import get_current_user, get_db
 from app.core.ai_exceptions import AIProviderError, RateLimitError
+from app.models.user import User
 from app.schemas.resume import ResumeVersionResponse, ResumeTailoringRequest
 from app.services.ai_resume_tailoring_service import ai_resume_tailoring_service
 
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 async def tailor_resume(
     request: ResumeTailoringRequest,
     db: AsyncSession = Depends(get_db),
-    user_id: UUID = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_user),
 ):
     """Tailor a master resume for a specific job posting using AI.
 
@@ -39,7 +40,7 @@ async def tailor_resume(
     try:
         resume_version = await ai_resume_tailoring_service.tailor_resume_for_job(
             db=db,
-            user_id=user_id,
+            user_id=current_user.id,
             master_resume_id=request.master_resume_id,
             job_posting_id=request.job_posting_id,
             prompt_template_id=request.prompt_template_id,
@@ -53,7 +54,7 @@ async def tailor_resume(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
     except RateLimitError as e:
-        logger.warning(f"Rate limit exceeded for user {user_id}: {e}")
+        logger.warning(f"Rate limit exceeded for user {current_user.id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=str(e),
@@ -79,7 +80,7 @@ async def tailor_resume(
 async def get_resume_diff(
     resume_version_id: UUID,
     db: AsyncSession = Depends(get_db),
-    user_id: UUID = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_user),
 ):
     """Get the differences between master resume and tailored version.
 
@@ -88,7 +89,7 @@ async def get_resume_diff(
     """
     try:
         diff = await ai_resume_tailoring_service.get_resume_diff(
-            db=db, resume_version_id=resume_version_id, user_id=user_id
+            db=db, resume_version_id=resume_version_id, user_id=current_user.id
         )
 
         return diff

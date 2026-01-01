@@ -157,14 +157,14 @@ async def seed_data(engine):
     async with engine.begin() as conn:
         # Create default user with properly hashed password
         # Password: password123
-        # Generated using: python3 -c "from passlib.context import CryptContext; print(CryptContext(schemes=['bcrypt']).hash('password123'))"
+        # Generated using: poetry run python generate_password_hash.py
         await conn.execute(
             text(
                 """
             INSERT INTO users (email, password_hash, full_name, is_active, email_verified)
             VALUES (
                 'user@example.com',
-                '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn98kXK9O3YOHxkGlEXQjmJaRjyC',  -- password123
+                '$2b$12$FDUKDtzwbvX4jGro2h/tvuju7/P43hZNw79o.JSFXA5siVFHmf7Hm',  -- password123
                 'Test User',
                 TRUE,
                 TRUE

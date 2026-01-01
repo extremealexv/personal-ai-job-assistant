@@ -190,6 +190,17 @@ async def auth_headers(test_user) -> dict[str, str]:
 
 
 @pytest.fixture
+async def other_user_auth_headers(other_user) -> dict[str, str]:
+    """Create authentication headers for other user with JWT token."""
+    from app.core.security import create_access_token
+    
+    access_token = create_access_token(
+        {"sub": other_user.email, "user_id": str(other_user.id)}
+    )
+    return {"Authorization": f"Bearer {access_token}"}
+
+
+@pytest.fixture
 def test_pdf_content() -> bytes:
     """Generate a minimal valid PDF for testing."""
     # Properly formatted PDF that PyPDF2 can parse

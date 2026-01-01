@@ -69,10 +69,7 @@ class PromptService:
             ForbiddenError: If user doesn't own the prompt
         """
         stmt = select(PromptTemplate).where(
-            and_(
-                PromptTemplate.id == prompt_id,
-                PromptTemplate.deleted_at.is_(None),
-            )
+            PromptTemplate.id == prompt_id
         )
         result = await db.execute(stmt)
         prompt = result.scalar_one_or_none()
@@ -111,10 +108,7 @@ class PromptService:
             List of prompt templates
         """
         stmt = select(PromptTemplate).where(
-            and_(
-                PromptTemplate.user_id == user_id,
-                PromptTemplate.deleted_at.is_(None),
-            )
+            PromptTemplate.user_id == user_id
         )
 
         # Apply filters
@@ -173,7 +167,7 @@ class PromptService:
         db: AsyncSession, prompt_id: UUID, user_id: UUID
     ) -> None:
         """
-        Delete (soft delete) a prompt template.
+        Delete a prompt template.
 
         Args:
             db: Database session
@@ -186,11 +180,8 @@ class PromptService:
         """
         prompt = await PromptService.get_prompt_template(db, prompt_id, user_id)
 
-        # Soft delete
-        from datetime import datetime, timezone
-
-        prompt.deleted_at = datetime.now(timezone.utc)
-
+        # Delete
+        await db.delete(prompt)
         await db.commit()
 
     @staticmethod

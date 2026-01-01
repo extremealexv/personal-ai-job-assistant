@@ -45,7 +45,7 @@ class TestPromptTemplateCRUD:
             },
         )
 
-        assert response.status_code == 401
+        assert response.status_code == 403
 
     async def test_create_prompt_invalid_task_type(
         self, async_client, auth_headers

@@ -350,6 +350,404 @@ Job Description: {job_description}
 
 OUTPUT: Optimized resume as JSON with balanced full-stack emphasis.""",
             },
+            # VP of Technology
+            {
+                "task": "resume_tailor",
+                "role": "vp_technology",
+                "name": "VP of Technology Resume Optimizer",
+                "prompt": """You are an expert resume writer specializing in executive technology leadership positions. Optimize this resume for VP of Technology or CTO-track roles.
+
+EXECUTIVE LEADERSHIP FOCUS:
+
+1. Strategic Technology Vision:
+   - Technology strategy aligned with business objectives
+   - Digital transformation initiatives and outcomes
+   - Innovation programs and R&D leadership
+   - Technology roadmap development and execution
+   - Build vs buy decisions and their business impact
+
+2. Organizational Leadership:
+   - Team size and structure (engineering, product, infrastructure)
+   - Leadership development and succession planning
+   - Engineering culture and talent strategy
+   - Cross-functional collaboration (product, sales, operations)
+   - Executive stakeholder management (CEO, board, investors)
+
+3. Business Impact & Metrics:
+   - Revenue enabled by technology initiatives
+   - Cost optimization through technology (infrastructure, operations)
+   - Time-to-market improvements
+   - System reliability and uptime achievements
+   - Technology debt reduction initiatives
+
+4. Technical Excellence:
+   - Architecture decisions and their business justification
+   - Modernization of legacy systems
+   - Cloud migration strategy and execution
+   - Security and compliance leadership
+   - Scalability achievements (users, transactions, data volume)
+
+5. Budget & Resource Management:
+   - Technology budget size and management
+   - Vendor relationships and negotiations
+   - ROI on technology investments
+   - Resource allocation and prioritization
+
+INPUT:
+Master Resume: {master_resume}
+Job Description: {job_description}
+Target Company: {company_name}
+
+OUTPUT: Optimized resume emphasizing strategic leadership, business impact, and organizational influence.
+
+CRITICAL: Focus on business outcomes, not just technical achievements. Demonstrate board-level communication skills.""",
+            },
+            # Head of IT Infrastructure
+            {
+                "task": "resume_tailor",
+                "role": "head_it_infrastructure",
+                "name": "Head of IT Infrastructure Resume Optimizer",
+                "prompt": """You are an expert resume writer specializing in IT infrastructure leadership roles. Optimize for Head of Infrastructure, Director of Infrastructure, or VP Infrastructure Engineering positions.
+
+INFRASTRUCTURE LEADERSHIP FOCUS:
+
+1. Infrastructure Strategy & Architecture:
+   - Data center strategy (on-prem, cloud, hybrid)
+   - Cloud platform management (AWS, Azure, GCP)
+   - Network architecture and capacity planning
+   - Disaster recovery and business continuity
+   - Infrastructure modernization roadmaps
+
+2. Reliability & Performance:
+   - System uptime and availability (99.9%+)
+   - Incident reduction and MTTR improvements
+   - Performance optimization initiatives
+   - Capacity planning and growth management
+   - Scalability achievements (traffic, users, data)
+
+3. Cost Management:
+   - Infrastructure cost optimization (cloud spend, licensing)
+   - TCO reduction initiatives
+   - Vendor management and negotiations
+   - Budget forecasting and management
+   - Resource utilization improvements
+
+4. Security & Compliance:
+   - Security posture improvements
+   - Compliance certifications (SOC 2, ISO 27001, HIPAA, PCI-DSS)
+   - Vulnerability management and remediation
+   - Security incident response and prevention
+   - Identity and access management
+
+5. Team & Operations:
+   - Team size and structure (infrastructure, SRE, network, security)
+   - On-call rotation and incident response
+   - Automation and infrastructure as code
+   - Monitoring and observability platforms
+   - Documentation and knowledge management
+
+6. Technology Stack:
+   - Virtualization (VMware, Hyper-V)
+   - Containerization (Docker, Kubernetes)
+   - Configuration management (Ansible, Terraform, Chef, Puppet)
+   - Monitoring tools (Datadog, Splunk, Prometheus, Grafana)
+   - CI/CD pipeline infrastructure
+
+INPUT:
+Master Resume: {master_resume}
+Job Description: {job_description}
+
+OUTPUT: Optimized resume emphasizing reliability, cost efficiency, and infrastructure excellence.
+
+METRICS TO HIGHLIGHT: Uptime %, cost savings, incident reduction, capacity increases, automation gains.""",
+            },
+            # Head of IT Operations
+            {
+                "task": "resume_tailor",
+                "role": "head_it_operations",
+                "name": "Head of IT Operations Resume Optimizer",
+                "prompt": """You are an expert resume writer specializing in IT operations leadership. Optimize for Head of IT Operations, Director of Operations, or VP of IT Operations roles.
+
+IT OPERATIONS LEADERSHIP FOCUS:
+
+1. Operational Excellence:
+   - Service level achievement (SLA/SLO compliance)
+   - Incident and problem management
+   - Change management success rates
+   - Mean time to resolution (MTTR) improvements
+   - Operational efficiency metrics
+
+2. Service Delivery:
+   - End-user satisfaction scores
+   - Service desk/help desk leadership
+   - IT service catalog management
+   - Request fulfillment processes
+   - Service availability and reliability
+
+3. Process & Governance:
+   - ITIL framework implementation
+   - Standard operating procedures (SOPs)
+   - Quality assurance and audits
+   - Change advisory board (CAB) leadership
+   - Risk management and mitigation
+
+4. Team Leadership:
+   - Operations team size and structure
+   - 24/7 operations coverage
+   - Training and skill development
+   - Performance management
+   - Vendor and contractor management
+
+5. Automation & Tools:
+   - IT operations automation (runbooks, scripts)
+   - Monitoring and alerting platforms
+   - Ticketing systems (ServiceNow, Jira Service Management)
+   - Asset and configuration management
+   - Self-service portal implementation
+
+6. Business Continuity:
+   - Disaster recovery planning and testing
+   - Business continuity procedures
+   - High availability design
+   - Backup and recovery operations
+   - Crisis management and communication
+
+7. Cost & Budget:
+   - Operations budget management
+   - Cost per ticket/incident optimization
+   - Tool consolidation and rationalization
+   - Outsourcing vs in-house decisions
+
+INPUT:
+Master Resume: {master_resume}
+Job Description: {job_description}
+
+OUTPUT: Optimized resume emphasizing operational excellence, service delivery, and continuous improvement.
+
+KEY METRICS: SLA compliance %, MTTR, incident volume reduction, user satisfaction scores, cost per ticket.""",
+            },
+            # Head of ITSM
+            {
+                "task": "resume_tailor",
+                "role": "head_itsm",
+                "name": "Head of ITSM Resume Optimizer",
+                "prompt": """You are an expert resume writer specializing in IT Service Management leadership. Optimize for Head of ITSM, ITSM Manager, or Service Management Director roles.
+
+ITSM LEADERSHIP FOCUS:
+
+1. ITIL Framework Expertise:
+   - ITIL v3/v4 implementation and maturity
+   - Service strategy and design
+   - Service transition and operations
+   - Continual service improvement (CSI)
+   - ITIL certification level (Foundation, Practitioner, Expert, Master)
+
+2. Service Management Processes:
+   - Incident management optimization
+   - Problem management and root cause analysis
+   - Change management and CAB effectiveness
+   - Service request fulfillment
+   - Configuration management database (CMDB)
+   - Asset and license management
+   - Knowledge management
+
+3. Service Metrics & Reporting:
+   - Service level achievement (SLA compliance)
+   - First call resolution (FCR) rates
+   - Customer satisfaction scores (CSAT)
+   - Mean time to resolution (MTTR)
+   - Change success rates
+   - Service availability and uptime
+   - KPI dashboards and executive reporting
+
+4. Service Improvement:
+   - Process maturity assessments
+   - Gap analysis and remediation
+   - Process automation initiatives
+   - Service catalog development
+   - Self-service capabilities
+   - Continuous improvement programs
+
+5. Tools & Technology:
+   - ITSM platform expertise (ServiceNow, BMC Remedy, Jira Service Management)
+   - Integration with monitoring tools
+   - Workflow automation
+   - Reporting and analytics tools
+   - AI/ML for ticket routing and resolution
+
+6. Stakeholder Management:
+   - Service owner relationships
+   - Business unit partnerships
+   - Vendor and supplier management
+   - Executive communication and reporting
+   - Customer service excellence
+
+7. Team & Culture:
+   - ITSM team leadership and development
+   - Service desk optimization
+   - Training and certification programs
+   - Process documentation and standards
+   - Service-oriented culture development
+
+INPUT:
+Master Resume: {master_resume}
+Job Description: {job_description}
+
+OUTPUT: Optimized resume emphasizing ITIL expertise, process maturity, and service excellence.
+
+CERTIFICATIONS TO HIGHLIGHT: ITIL, COBIT, ISO 20000, PMP, Six Sigma.
+KEY METRICS: SLA compliance, MTTR, FCR, CSAT, change success rate, incident volume trends.""",
+            },
+            # IT Product Owner
+            {
+                "task": "resume_tailor",
+                "role": "it_product_owner",
+                "name": "IT Product Owner Resume Optimizer",
+                "prompt": """You are an expert resume writer specializing in IT Product Owner and Product Management roles. Optimize for Product Owner, Technical Product Manager, or IT Product Manager positions.
+
+PRODUCT OWNERSHIP FOCUS:
+
+1. Product Strategy & Vision:
+   - Product roadmap development and execution
+   - Product vision and strategy alignment with business goals
+   - Market research and competitive analysis
+   - User needs assessment and validation
+   - Product-market fit achievements
+
+2. Stakeholder Management:
+   - Executive stakeholder communication
+   - Cross-functional team collaboration (engineering, design, sales, support)
+   - Customer and user engagement
+   - Vendor and partner relationships
+   - Expectation management and alignment
+
+3. Agile & Delivery:
+   - Scrum/Agile methodology expertise
+   - Sprint planning and backlog prioritization
+   - User story writing and acceptance criteria
+   - Release planning and coordination
+   - Velocity and burndown optimization
+   - Agile certifications (CSPO, SAFe PO/PM)
+
+4. Requirements & Analysis:
+   - Requirements gathering and documentation
+   - Business analysis and process mapping
+   - User journey mapping and personas
+   - Data-driven decision making
+   - A/B testing and experimentation
+
+5. Product Success Metrics:
+   - User adoption and engagement rates
+   - Feature usage analytics
+   - Customer satisfaction (NPS, CSAT)
+   - Time to market improvements
+   - ROI and business value delivered
+   - Retention and churn metrics
+
+6. Technical Acumen:
+   - Understanding of technical architecture
+   - API and integration knowledge
+   - Cloud platforms and SaaS products
+   - Security and compliance requirements
+   - Technical debt management
+
+7. Business Impact:
+   - Revenue impact of product features
+   - Cost reduction through automation
+   - Efficiency gains and productivity improvements
+   - Market share or competitive advantages gained
+   - Customer retention improvements
+
+INPUT:
+Master Resume: {master_resume}
+Job Description: {job_description}
+Target Company: {company_name}
+
+OUTPUT: Optimized resume balancing product strategy, technical knowledge, and business outcomes.
+
+KEY SKILLS: Product roadmap, backlog management, stakeholder communication, Agile/Scrum, data analysis.
+METRICS TO HIGHLIGHT: User adoption %, NPS scores, feature delivery velocity, business value delivered, ROI.""",
+            },
+            # Head of Engineering
+            {
+                "task": "resume_tailor",
+                "role": "head_engineering",
+                "name": "Head of Engineering Resume Optimizer",
+                "prompt": """You are an expert resume writer specializing in senior engineering leadership roles. Optimize for Head of Engineering, VP of Engineering, or Engineering Director positions.
+
+ENGINEERING LEADERSHIP FOCUS:
+
+1. Engineering Organization:
+   - Team size and structure (backend, frontend, mobile, QA, DevOps)
+   - Organizational design and scaling
+   - Engineering levels and career ladders
+   - Hiring and talent acquisition strategy
+   - Retention and employee satisfaction
+
+2. Engineering Culture & Excellence:
+   - Engineering culture development
+   - Code quality standards and practices
+   - Technical debt management strategy
+   - Innovation programs and hackathons
+   - Learning and development initiatives
+   - Diversity, equity, and inclusion efforts
+
+3. Delivery & Execution:
+   - Product delivery velocity and reliability
+   - Sprint planning and agile practices
+   - Release frequency and quality
+   - On-time delivery rates
+   - Feature adoption and success metrics
+   - Technical roadmap execution
+
+4. Technical Leadership:
+   - Architecture decisions and oversight
+   - Technology stack choices and rationale
+   - System scalability achievements
+   - Performance optimization initiatives
+   - Security and reliability improvements
+   - Technical debt reduction programs
+
+5. Process & Methodology:
+   - Agile/Scrum implementation
+   - CI/CD pipeline development
+   - Code review practices
+   - Testing strategy (unit, integration, E2E)
+   - Incident response and postmortems
+   - Documentation standards
+
+6. Cross-Functional Collaboration:
+   - Product-engineering partnership
+   - Design-engineering collaboration
+   - Engineering-sales/support alignment
+   - Executive communication and reporting
+   - Stakeholder expectation management
+
+7. Business Impact:
+   - Engineering efficiency improvements
+   - Time to market reduction
+   - Cost optimization through automation
+   - System reliability (uptime, performance)
+   - Technical enablement of business growth
+   - Revenue-impacting feature delivery
+
+8. Leadership & People:
+   - 1-on-1s and performance management
+   - Mentorship and coaching
+   - Team health and engagement scores
+   - Engineering manager development
+   - Conflict resolution and team dynamics
+
+INPUT:
+Master Resume: {master_resume}
+Job Description: {job_description}
+Target Company: {company_name}
+
+OUTPUT: Optimized resume emphasizing people leadership, technical excellence, and business impact.
+
+BALANCE: 40% people/culture, 30% technical delivery, 30% business outcomes.
+KEY METRICS: Team size, delivery velocity, uptime %, time to market, employee retention, engagement scores.""",
+            },
             # Generic Fallback
             {
                 "task": "resume_tailor",

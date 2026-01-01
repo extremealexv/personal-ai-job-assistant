@@ -14,7 +14,7 @@ class TestSearchService:
     """Test search service functionality."""
 
     async def test_global_search_jobs(
-        self, db_session, sample_user, sample_job_posting
+        self, db_session, test_user, sample_job_posting
     ):
         """Test searching across jobs."""
         params = SearchParams(
@@ -38,7 +38,7 @@ class TestSearchService:
         assert job_result.relevance_score > 0
 
     async def test_global_search_applications(
-        self, db_session, sample_user, sample_application
+        self, db_session, test_user, sample_application
     ):
         """Test searching across applications."""
         # Update application notes to match search
@@ -59,7 +59,7 @@ class TestSearchService:
         assert all(r.entity_type == "application" for r in result.results)
 
     async def test_global_search_cover_letters(
-        self, db_session, sample_user, sample_cover_letter
+        self, db_session, test_user, sample_cover_letter
     ):
         """Test searching across cover letters."""
         params = SearchParams(
@@ -76,7 +76,7 @@ class TestSearchService:
         assert all(r.entity_type == "cover_letter" for r in result.results)
 
     async def test_global_search_all_types(
-        self, db_session, sample_user, sample_job_posting, sample_application, sample_cover_letter
+        self, db_session, test_user, sample_job_posting, sample_application, sample_cover_letter
     ):
         """Test searching across all entity types."""
         params = SearchParams(
@@ -93,13 +93,13 @@ class TestSearchService:
         assert len(entity_types_found) >= 1
 
     async def test_search_pagination(
-        self, db_session, sample_user
+        self, db_session, test_user
     ):
         """Test search pagination works correctly."""
         # Create multiple jobs with searchable content
         for i in range(5):
             job = JobPosting(
-                user_id=sample_user.id,
+                user_id=test_user.id,
                 company_name=f"Company {i}",
                 job_title="Python Developer",
                 job_url=f"https://example.com/job{i}",
@@ -123,7 +123,7 @@ class TestSearchService:
         assert len(result.results) <= 3
 
     async def test_search_no_results(
-        self, db_session, sample_user
+        self, db_session, test_user
     ):
         """Test search with no matching results."""
         params = SearchParams(
@@ -138,7 +138,7 @@ class TestSearchService:
         assert len(result.results) == 0
 
     async def test_search_sort_by_created_at(
-        self, db_session, sample_user, sample_job_posting
+        self, db_session, test_user, sample_job_posting
     ):
         """Test sorting by created_at."""
         params = SearchParams(
@@ -157,7 +157,7 @@ class TestSearchService:
                 assert result.results[i].created_at >= result.results[i + 1].created_at
 
     async def test_search_filter_by_entity_type(
-        self, db_session, sample_user, sample_job_posting, sample_application
+        self, db_session, test_user, sample_job_posting, sample_application
     ):
         """Test filtering results by entity type."""
         params = SearchParams(
@@ -175,7 +175,7 @@ class TestSearchService:
         assert result.facets["cover_letter"] == 0
 
     async def test_search_user_isolation(
-        self, db_session, sample_user, other_user
+        self, db_session, test_user, other_user
     ):
         """Test users can only search their own data."""
         # Create job for other user
@@ -195,7 +195,7 @@ class TestSearchService:
             page_size=20,
         )
         
-        result = await SearchService.global_search(db_session, sample_user.id, params)
+        result = await SearchService.global_search(db_session, test_user.id, params)
         
         # Should not find other user's job
         assert result.total == 0

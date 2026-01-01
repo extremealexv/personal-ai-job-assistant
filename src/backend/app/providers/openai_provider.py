@@ -20,6 +20,8 @@ from app.core.ai_exceptions import (
     TokenLimitExceededError,
 )
 from app.core.ai_provider import AIModelConfig, AIProvider, AIResponse, AIUsageMetrics
+from app.services.cost_tracking_service import cost_tracking_service
+from app.services.rate_limit_service import rate_limit_service
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +205,10 @@ class OpenAIProvider(AIProvider):
         user_id: Optional[UUID] = None,
         metadata: Optional[dict[str, Any]] = None,
     ) -> AIResponse:
-        """Generate a completion from OpenAI."""
+        """Generate a completion from OpenAI with rate limiting and cost tracking."""
+        # Check rate limits first
+        await rate_limit_service.check_rate_limit(user_id)
+
         # Use provided config or defaults
         if config is None:
             config = AIModelConfig(
@@ -211,6 +216,13 @@ class OpenAIProvider(AIProvider):
                 temperature=self.default_temperature,
                 max_tokens=self.default_max_tokens,
             )
+
+        # Estimate cost (rough estimate: ~750 tokens per 1000 chars of text)
+        estimated_tokens = len(prompt) // 2 + (len(system_prompt) // 2 if system_prompt else 0)
+        estimated_cost = self._calculate_cost(config.model, estimated_tokens, config.max_tokens or 500)
+
+        # Check budget limits
+        await cost_tracking_service.check_budget_limit(user_id, estimated_cost)
 
         # Build messages
         messages = []
@@ -234,8 +246,23 @@ class OpenAIProvider(AIProvider):
         # Create response
         response = self._create_ai_response(completion, user_id)
 
+        # Record actual cost
+        await cost_tracking_service.record_cost(user_id, response.usage.estimated_cost)
+
+        # Record successful request for rate limiting
+        await rate_limit_service.record_request(user_id)
+
         logger.info(
             f"OpenAI response - Tokens: {response.usage.total_tokens}, "
+            f"Cost: ${response.usage.estimated_cost:.4f}"
+        )
+
+        # Check for budget warnings
+        warning = await cost_tracking_service.get_cost_warning_threshold(user_id)
+        if warning:
+            logger.warning(warning)
+
+        return response
             f"Cost: ${response.usage.estimated_cost:.4f}"
         )
 

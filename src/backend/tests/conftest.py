@@ -179,7 +179,7 @@ async def test_user(db_session: AsyncSession):
 
 
 @pytest.fixture
-def auth_headers(test_user) -> dict[str, str]:
+async def auth_headers(test_user) -> dict[str, str]:
     """Create authentication headers for test user with JWT token."""
     from app.core.security import create_access_token
     

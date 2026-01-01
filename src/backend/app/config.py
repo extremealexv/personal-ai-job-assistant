@@ -89,7 +89,7 @@ class Settings(BaseSettings):
     
     # Google Gemini Configuration
     gemini_api_key: Optional[str] = Field(default=None, description="Google Gemini API key")
-    gemini_model: str = Field(default="gemini-pro", description="Default Gemini model")
+    gemini_model: str = Field(default="gemini-1.5-flash", description="Default Gemini model (gemini-1.5-flash, gemini-1.5-pro)")
     gemini_max_tokens: int = Field(default=4000, description="Max tokens per request")
     gemini_temperature: float = Field(default=0.7, description="Default temperature for completions")
     gemini_max_retries: int = Field(default=3, description="Max retries for Gemini API calls")

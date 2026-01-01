@@ -27,11 +27,13 @@ logger = logging.getLogger(__name__)
 class GeminiProvider(AIProvider):
     """Google Gemini API provider implementation."""
 
-    # Token pricing (per 1M tokens) - Gemini Pro is FREE up to 60 RPM
+    # Token pricing (per 1M tokens) - Gemini models with free tiers
     MODEL_PRICING = {
-        "gemini-pro": {"prompt": 0.0, "completion": 0.0},  # Free tier
+        "gemini-pro": {"prompt": 0.0, "completion": 0.0},  # Deprecated - Free tier
         "gemini-1.5-pro": {"prompt": 0.00125, "completion": 0.005},
         "gemini-1.5-flash": {"prompt": 0.000075, "completion": 0.0003},
+        "gemini-2.0-flash": {"prompt": 0.0, "completion": 0.0},  # Free tier
+        "gemini-2.5-flash": {"prompt": 0.0, "completion": 0.0},  # Free tier (experimental)
     }
 
     def __init__(self):
@@ -106,10 +108,37 @@ class GeminiProvider(AIProvider):
         # Extract text from response
         content = response.text
 
-        # Get usage metadata (Gemini provides token counts)
-        prompt_tokens = response.usage_metadata.prompt_token_count
-        completion_tokens = response.usage_metadata.candidates_token_count
-        total_tokens = response.usage_metadata.total_token_count
+        # Get usage metadata (handle both old and new API formats)
+        prompt_tokens = 0
+        completion_tokens = 0
+        total_tokens = 0
+        
+        try:
+            if hasattr(response, "usage_metadata"):
+                usage = response.usage_metadata
+                # New API format (Gemini 2.5+)
+                prompt_tokens = getattr(usage, "prompt_token_count", 0)
+                completion_tokens = getattr(usage, "candidates_token_count", 0)
+                total_tokens = getattr(usage, "total_token_count", 0)
+            elif hasattr(response, "_result") and hasattr(response._result, "usage_metadata"):
+                # Alternative location for usage metadata
+                usage = response._result.usage_metadata
+                prompt_tokens = getattr(usage, "prompt_token_count", 0)
+                completion_tokens = getattr(usage, "candidates_token_count", 0)
+                total_tokens = getattr(usage, "total_token_count", 0)
+            else:
+                # Fallback: estimate based on content length
+                logger.warning("Unable to get usage metadata from Gemini response, estimating tokens")
+                estimated_tokens = len(content) // 4  # Rough estimate: 1 token ≈ 4 characters
+                prompt_tokens = 0
+                completion_tokens = estimated_tokens
+                total_tokens = estimated_tokens
+        except Exception as e:
+            logger.warning(f"Error extracting usage metadata: {e}, using estimates")
+            estimated_tokens = len(content) // 4
+            prompt_tokens = 0
+            completion_tokens = estimated_tokens
+            total_tokens = estimated_tokens
 
         # Calculate cost
         estimated_cost = self._calculate_cost(model, prompt_tokens, completion_tokens)

@@ -348,7 +348,7 @@ class TestLogin:
         await db_session.commit()
         
         login_data = {
-            "email".email,
+            "email": user.email,
             "password": "TestPass123!",
         }
         
@@ -401,7 +401,7 @@ class TestLogin:
         await db_session.refresh(user)  # Refresh to get DB defaults
         
         login_data = {
-            "email".email,
+            "email": user.email,
             "password": "WrongPassword123!",
         }
         

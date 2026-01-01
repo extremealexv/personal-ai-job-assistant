@@ -31,12 +31,14 @@ def remove_fixture_type_hints(filepath: Path) -> bool:
         
         # Remove type hints for common async fixtures
         # Pattern: parameter_name: TypeHint -> parameter_name
+        # IMPORTANT: Only match in function parameter contexts, not dictionary literals
         patterns = [
-            (r': AsyncClient', ''),
-            (r': AsyncSession', ''),
-            (r': User(?!\w)', ''),  # Negative lookahead to avoid matching 'UserCreate', etc.
-            (r': dict\[str,\s*str\]', ''),
-            (r': dict(?!\[)', ''),  # dict without generic parameter
+            # Match type hints in function parameters (after comma or opening paren, before closing paren or comma)
+            (r'(\(|,\s+)(\w+): AsyncClient', r'\1\2'),
+            (r'(\(|,\s+)(\w+): AsyncSession', r'\1\2'),
+            (r'(\(|,\s+)(\w+): User(?!\w)', r'\1\2'),  # Negative lookahead to avoid matching 'UserCreate'
+            (r'(\(|,\s+)(\w+): dict\[str,\s*str\]', r'\1\2'),
+            (r'(\(|,\s+)(\w+): dict(?!\[)', r'\1\2'),  # dict without generic parameter
         ]
         
         for pattern, replacement in patterns:

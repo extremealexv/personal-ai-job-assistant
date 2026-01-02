@@ -245,41 +245,63 @@ class AIResumeTailoringService:
         """Extract JSON from AI response that may be wrapped in markdown code blocks."""
         import re
 
-        # Try to find JSON in markdown code blocks - use non-greedy match with proper JSON structure
-        # First, try to extract from ```json ... ``` blocks
-        json_pattern = r"```json\s*\n(.*?)\n```"
+        logger.debug(f"Attempting to extract JSON from content of length {len(content)}")
+        logger.debug(f"Content preview: {content[:200]}...")
+
+        # Try to find JSON in markdown code blocks - be flexible with whitespace
+        # First, try to extract from ```json ... ``` blocks (most flexible pattern)
+        json_pattern = r"```json\s*(.*?)\s*```"
         match = re.search(json_pattern, content, re.DOTALL)
-        
+
         if match:
+            json_str = match.group(1).strip()
+            logger.debug(f"Found JSON block, extracted {len(json_str)} characters")
             try:
-                json_str = match.group(1).strip()
-                return json.loads(json_str)
+                parsed = json.loads(json_str)
+                logger.info("Successfully parsed JSON from ```json block")
+                return parsed
             except json.JSONDecodeError as e:
-                logger.warning(f"Failed to parse JSON from markdown block: {e}")
+                logger.warning(f"Failed to parse JSON from ```json block: {e}")
+                logger.debug(f"Failed JSON content: {json_str[:500]}...")
 
         # Try generic code blocks
-        json_pattern = r"```\s*\n(.*?)\n```"
+        json_pattern = r"```\s*(.*?)\s*```"
         match = re.search(json_pattern, content, re.DOTALL)
-        
+
         if match:
+            json_str = match.group(1).strip()
+            # Check if it starts with { to be JSON
+            if json_str.startswith('{'):
+                logger.debug(f"Found generic code block with JSON-like content: {len(json_str)} chars")
+                try:
+                    parsed = json.loads(json_str)
+                    logger.info("Successfully parsed JSON from generic ``` block")
+                    return parsed
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Failed to parse JSON from generic code block: {e}")
+
+        # Try to find any JSON object in the content (most permissive)
+        json_object_pattern = r'\{.*\}'
+        match = re.search(json_object_pattern, content, re.DOTALL)
+        if match:
+            json_str = match.group(0).strip()
+            logger.debug(f"Found JSON-like object in content: {len(json_str)} chars")
             try:
-                json_str = match.group(1).strip()
-                # Check if it starts with { to be JSON
-                if json_str.startswith('{'):
-                    return json.loads(json_str)
+                parsed = json.loads(json_str)
+                logger.info("Successfully parsed JSON object from content")
+                return parsed
             except json.JSONDecodeError as e:
-                logger.warning(f"Failed to parse JSON from generic code block: {e}")
+                logger.warning(f"Failed to parse extracted JSON object: {e}")
 
         # If no markdown blocks, try direct parsing
         try:
-            return json.loads(content.strip())
+            parsed = json.loads(content.strip())
+            logger.info("Successfully parsed content as direct JSON")
+            return parsed
         except json.JSONDecodeError:
             # Return minimal structure
-            logger.warning("Could not parse AI response, returning minimal structure")
-            return {"modifications": content, "error": "Could not parse as JSON"}
-
-    async def get_resume_diff(
-        self, db: AsyncSession, resume_version_id: UUID, user_id: UUID
+            logger.error("Could not parse AI response as JSON after all attempts")
+            logger.debug(f"Full content: {content}")
     ) -> dict[str, Any]:
         """Get diff between master resume and tailored version.
 

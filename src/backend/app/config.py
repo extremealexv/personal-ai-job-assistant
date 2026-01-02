@@ -75,9 +75,43 @@ class Settings(BaseSettings):
     )
 
     # AI Service Configuration
-    openai_api_key: str = Field(..., description="OpenAI API key")
-    openai_model: str = Field(default="gpt-4", description="Default OpenAI model")
+    ai_provider: str = Field(
+        default="gemini", description="AI provider to use: 'openai' or 'gemini'"
+    )
+    
+    # OpenAI Configuration
+    openai_api_key: Optional[str] = Field(default=None, description="OpenAI API key")
+    openai_model: str = Field(default="gpt-3.5-turbo", description="Default OpenAI model")
     openai_max_tokens: int = Field(default=4000, description="Max tokens per request")
+    openai_temperature: float = Field(default=0.7, description="Default temperature for completions")
+    openai_timeout: int = Field(default=30, description="OpenAI API timeout in seconds")
+    openai_max_retries: int = Field(default=3, description="Max retries for OpenAI API calls")
+    
+    # Google Gemini Configuration
+    gemini_api_key: Optional[str] = Field(default=None, description="Google Gemini API key")
+    gemini_model: str = Field(default="gemini-1.5-flash", description="Default Gemini model (gemini-1.5-flash, gemini-1.5-pro)")
+    gemini_max_tokens: int = Field(default=4000, description="Max tokens per request")
+    gemini_temperature: float = Field(default=0.7, description="Default temperature for completions")
+    gemini_max_retries: int = Field(default=3, description="Max retries for Gemini API calls")
+    
+    # AI Rate Limiting
+    ai_requests_per_minute: int = Field(
+        default=10, description="Max AI API requests per minute per user"
+    )
+    ai_requests_per_day: int = Field(
+        default=100, description="Max AI API requests per day per user"
+    )
+    
+    # AI Cost Tracking
+    openai_cost_per_1k_prompt_tokens: float = Field(
+        default=0.03, description="Cost per 1000 prompt tokens (GPT-4)"
+    )
+    openai_cost_per_1k_completion_tokens: float = Field(
+        default=0.06, description="Cost per 1000 completion tokens (GPT-4)"
+    )
+    ai_monthly_budget_limit: float = Field(
+        default=100.0, description="Monthly AI API budget limit in USD"
+    )
 
     # OAuth & External Services
     gmail_client_secret: Optional[str] = Field(

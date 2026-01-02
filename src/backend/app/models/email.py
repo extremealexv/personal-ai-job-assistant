@@ -52,7 +52,7 @@ class EmailThread(Base):
 
     # Classification (AI-powered)
     classification: Mapped[Optional[EmailClassification]] = mapped_column(
-        Enum(EmailClassification, name="email_classification")
+        Enum(EmailClassification, name="email_classification", values_callable=lambda x: [e.value for e in x])
     )
     classification_confidence: Mapped[Optional[Decimal]] = mapped_column(Numeric(3, 2))
     classified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))

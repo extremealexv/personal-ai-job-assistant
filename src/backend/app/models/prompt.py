@@ -39,7 +39,8 @@ class PromptTemplate(Base):
 
     # Template metadata
     task_type: Mapped[PromptTask] = mapped_column(
-        Enum(PromptTask, name="prompt_task"), nullable=False
+        Enum(PromptTask, name="prompt_task", values_callable=lambda x: [e.value for e in x]), 
+        nullable=False
     )
     role_type: Mapped[Optional[str]] = mapped_column(String(100))
 

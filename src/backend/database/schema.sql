@@ -174,6 +174,7 @@ CREATE TABLE skills (
     display_order INT DEFAULT 0,
     
     created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     
     CONSTRAINT valid_experience_years CHECK (years_of_experience IS NULL OR years_of_experience >= 0)
 );
@@ -193,6 +194,7 @@ CREATE TABLE certifications (
     display_order INT DEFAULT 0,
     
     created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     
     CONSTRAINT valid_cert_dates CHECK (expiration_date IS NULL OR expiration_date >= issue_date)
 );
@@ -540,6 +542,10 @@ CREATE TRIGGER update_work_experiences_updated_at
 
 CREATE TRIGGER update_education_updated_at
     BEFORE UPDATE ON education
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_certifications_updated_at
+    BEFORE UPDATE ON certifications
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_job_postings_updated_at

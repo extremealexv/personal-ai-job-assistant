@@ -179,12 +179,23 @@ async def test_user(db_session: AsyncSession):
 
 
 @pytest.fixture
-def auth_headers(test_user) -> dict[str, str]:
+async def auth_headers(test_user) -> dict[str, str]:
     """Create authentication headers for test user with JWT token."""
     from app.core.security import create_access_token
     
     access_token = create_access_token(
         {"sub": test_user.email, "user_id": str(test_user.id)}
+    )
+    return {"Authorization": f"Bearer {access_token}"}
+
+
+@pytest.fixture
+async def other_user_auth_headers(other_user) -> dict[str, str]:
+    """Create authentication headers for other user with JWT token."""
+    from app.core.security import create_access_token
+    
+    access_token = create_access_token(
+        {"sub": other_user.email, "user_id": str(other_user.id)}
     )
     return {"Authorization": f"Bearer {access_token}"}
 
@@ -549,6 +560,41 @@ async def other_user(db_session):
     await db_session.commit()
     await db_session.refresh(other)
     return other
+
+
+@pytest.fixture
+async def other_user_job(db_session, other_user):
+    """Create a job posting for the other user."""
+    from app.models.job import JobPosting, JobStatus
+    
+    job = JobPosting(
+        user_id=other_user.id,
+        company_name="Other Company",
+        job_title="Other Role",
+        job_url="https://example.com/other-job",
+        status=JobStatus.SAVED,
+    )
+    db_session.add(job)
+    await db_session.commit()
+    await db_session.refresh(job)
+    return job
+
+
+@pytest.fixture
+async def other_user_application(db_session, other_user, other_user_job, sample_resume_version):
+    """Create an application for the other user."""
+    from app.models.job import Application, ApplicationStatus
+    
+    app = Application(
+        user_id=other_user.id,
+        job_posting_id=other_user_job.id,
+        resume_version_id=sample_resume_version.id,
+        status=ApplicationStatus.SUBMITTED,
+    )
+    db_session.add(app)
+    await db_session.commit()
+    await db_session.refresh(app)
+    return app
 
 
 # ================================================================================

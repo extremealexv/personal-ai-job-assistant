@@ -10,6 +10,137 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### AI Resume Tailoring System (AI Integration - Phase 1) 🤖
+- **AI-Powered Resume Optimization**
+  - Automatic resume tailoring for specific job postings
+  - Keyword extraction and relevance matching from job descriptions
+  - Executive-level positioning with quantifiable impact statements
+  - ATS optimization for applicant tracking systems
+  - Resume version creation with tracked modifications
+- **Multi-Provider AI Support**
+  - Google Gemini integration (free tier: gemini-2.5-flash)
+  - OpenAI GPT integration (gpt-4, gpt-3.5-turbo)
+  - Flexible provider abstraction for future expansion
+  - Configurable model parameters (temperature, max tokens)
+- **Prompt Template Management**
+  - Customizable prompt templates per role type
+  - Version tracking for prompts
+  - Default prompts with role-specific optimization
+  - Support for user-defined custom prompts
+- **Advanced JSON Parsing**
+  - Flexible markdown code block extraction
+  - Multiple regex patterns for AI response parsing
+  - Fallback mechanisms for plain JSON
+  - Comprehensive error handling and logging
+- **API Endpoints**
+  - POST /api/v1/ai/resume/tailor - Generate tailored resume
+  - GET /api/v1/ai/resume/versions - List resume versions
+  - GET /api/v1/ai/resume/versions/{id} - Get version by ID
+  - PUT /api/v1/ai/resume/versions/{id} - Update version
+  - DELETE /api/v1/ai/resume/versions/{id} - Delete version
+- **Testing**
+  - 30+ unit tests for service layer
+  - 15+ integration tests for API endpoints
+  - Mock AI provider for deterministic testing
+  - Edge case coverage (invalid JSON, API failures)
+- **Performance**
+  - ~8-10 second generation time
+  - Zero-cost operation with Gemini free tier
+  - Retry logic with exponential backoff
+  - Rate limiting support
+
+#### AI Cover Letter Generation System (AI Integration - Phase 2) 🤖
+- **AI-Generated Cover Letters**
+  - Personalized cover letter generation per application
+  - Company and role-specific customization
+  - Resume summary integration with job requirements
+  - Executive-level persuasive writing
+  - Quantifiable impact storytelling
+- **Tone Customization**
+  - Professional tone (default)
+  - Enthusiastic tone (high energy)
+  - Formal tone (traditional business)
+  - Creative tone (innovative industries)
+- **Version Management**
+  - Multiple cover letter versions per application
+  - Auto-incrementing version numbers
+  - Version activation/deactivation control
+  - Content validation (100-10,000 characters)
+- **Content Extraction**
+  - Flexible markdown code block handling
+  - Plain text extraction from AI responses
+  - Automatic whitespace trimming
+  - Content validation and sanitization
+- **API Endpoints**
+  - POST /api/v1/ai/cover-letter/generate - Generate cover letter
+  - GET /api/v1/ai/cover-letter/list - List all versions for application
+  - GET /api/v1/ai/cover-letter/{id} - Get cover letter by ID
+  - PUT /api/v1/ai/cover-letter/{id} - Update cover letter
+  - PATCH /api/v1/ai/cover-letter/{id}/activate - Activate version
+  - DELETE /api/v1/ai/cover-letter/{id} - Delete cover letter
+- **Testing**
+  - 25+ unit tests for service layer
+  - 20+ integration tests for API endpoints
+  - Mock AI provider for consistent test results
+  - Version management test coverage
+- **Performance**
+  - ~8-10 second generation time
+  - Zero-cost operation with Gemini free tier
+  - Efficient resume summary creation
+
+#### Google Gemini Provider Implementation
+- **Core Integration**
+  - Full Google Generative AI SDK integration
+  - Support for Gemini 1.5 and 2.0/2.5 models
+  - Free tier models (gemini-2.0-flash, gemini-2.5-flash)
+  - Paid models (gemini-1.5-pro, gemini-1.5-flash)
+- **Features**
+  - Async API calls with asyncio.to_thread
+  - Usage tracking and cost calculation
+  - Token counting (prompt, completion, total)
+  - Content filtering and safety settings
+  - Retry logic with exponential backoff
+- **Error Handling**
+  - Rate limit detection and retry
+  - Invalid API key detection
+  - Model not found handling
+  - Token limit exceeded handling
+  - Content filtering detection
+- **Cost Tracking**
+  - Per-model pricing configuration
+  - Usage statistics by user
+  - Request/token/cost aggregation
+  - Free tier model identification
+
+#### Bug Fixes and Improvements
+- **JSON Parsing Enhancement**
+  - Fixed regex pattern from `\n(.*?)\n` to `\s*(.*?)\s*`
+  - Added fallback pattern `\{.*\}` for plain JSON
+  - Comprehensive logging for debugging
+  - Fixed missing return statement in extraction method
+- **Async Database Session Handling**
+  - Added `await db.refresh(application, ["job_posting"])` for eager loading
+  - Fixed MissingGreenlet error in applications endpoint
+  - Proper relationship loading before session close
+- **Import Path Corrections**
+  - Fixed `app.api.v1.dependencies` → `app.api.deps`
+  - Consistent import structure across endpoints
+- **Authentication Field Alignment**
+  - Documented login endpoint expects "email" not "username"
+  - Updated test fixtures and documentation
+
+### Changed
+- AI provider abstraction supports multiple backends
+- Resume tailoring now creates resume_version records
+- Cover letter generation integrates with application workflow
+- Improved error messages for AI API failures
+
+### Fixed
+- JSON parsing now handles Gemini markdown code blocks
+- Async session properly refreshes relationships before access
+- Cover letter test content meets validation requirements
+- Import paths consistent across all AI endpoints
+
 #### Job Management System (Issue #56 - Phase 1)
 - **Job Posting Management**
   - Create, read, update, delete job postings

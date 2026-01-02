@@ -3,10 +3,13 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_current_user, get_db
 from app.core.exceptions import ForbiddenError, NotFoundError
+from app.models.application import Application
 from app.models.user import User
 from app.schemas.application import (
     ApplicationCreate,
@@ -30,6 +33,9 @@ async def create_application(
 ) -> ApplicationResponse:
     """Create a new application."""
     application = await application_service.create_application(db, current_user.id, data)
+
+    # Eagerly load the job_posting relationship to avoid lazy loading issues
+    await db.refresh(application, ["job_posting"])
 
     # Convert to response with job details
     response = ApplicationResponse.model_validate(application)

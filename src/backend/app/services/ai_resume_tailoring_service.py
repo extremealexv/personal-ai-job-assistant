@@ -302,6 +302,10 @@ class AIResumeTailoringService:
             # Return minimal structure
             logger.error("Could not parse AI response as JSON after all attempts")
             logger.debug(f"Full content: {content}")
+            return {"modifications": content, "error": "Could not parse as JSON"}
+
+    async def get_resume_diff(
+        self, db: AsyncSession, resume_version_id: UUID, user_id: UUID
     ) -> dict[str, Any]:
         """Get diff between master resume and tailored version.
 

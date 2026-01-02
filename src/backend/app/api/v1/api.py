@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    ai_cover_letter,
     ai_resume,
     analytics,
     applications,
@@ -29,6 +30,7 @@ api_router.include_router(prompt_templates.router, prefix="/prompt-templates", t
 api_router.include_router(search.router, prefix="/search", tags=["Search"])
 api_router.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
 api_router.include_router(ai_resume.router, prefix="/ai/resume", tags=["AI Resume Tailoring"])
+api_router.include_router(ai_cover_letter.router, prefix="/ai/cover-letter", tags=["AI Cover Letter"])
 
 # TODO: Add more routers as they are implemented
 # api_router.include_router(users.router, prefix="/users", tags=["Users"])

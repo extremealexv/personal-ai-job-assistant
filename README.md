@@ -60,14 +60,39 @@ The Personal AI Job Search Assistant is a comprehensive system designed to strea
 - **36 tests** (18 unit + 18 integration, 100% pass rate)
 - **96% service coverage, 90% API coverage**
 
+#### AI Resume Tailoring (AI Integration - Phase 1) 🤖 **NEW**
+- AI-powered resume optimization for specific job postings
+- Automatic keyword extraction and relevance matching
+- Executive-level positioning and quantifiable impact
+- Resume version creation with tracked modifications
+- Support for multiple AI providers (OpenAI, Google Gemini)
+- Customizable prompt templates per role type
+- JSON parsing with flexible markdown code block handling
+- **2 REST API endpoints** (`/api/v1/ai/resume/tailor`, `/api/v1/ai/resume/versions`)
+- **30+ unit tests, 15+ integration tests**
+- **Zero-cost operation with Gemini free tier**
+- **~8-10 second generation time**
+
+#### AI Cover Letter Generation (AI Integration - Phase 2) 🤖 **NEW**
+- AI-generated personalized cover letters per application
+- Multiple tone options (professional/enthusiastic/formal/creative)
+- Executive-level persuasive writing
+- Company and role-specific customization
+- Version management with activation control
+- Resume summary integration
+- Customizable prompt templates
+- **3 REST API endpoints** (`/api/v1/ai/cover-letter/generate`, `/list`, `/{id}`)
+- **25+ unit tests, 20+ integration tests**
+- **Zero-cost operation with Gemini free tier**
+- **~8-10 second generation time**
+
 **Total Implementation Status:**
-- ✅ **122 tests passing** (61 unit + 61 integration)
+- ✅ **240+ tests passing** (120+ unit + 120+ integration)
 - ✅ **85-98% coverage** on all core modules
-- ✅ **55 REST API endpoints** fully functional
+- ✅ **65+ REST API endpoints** fully functional
+- ✅ **AI features operational** with Google Gemini at $0 cost
 
 ### 🚧 Planned
-- **Smart Resume Tailoring** - AI-powered resume optimization for each job posting
-- **AI Cover Letter Generation** - Automated cover letter creation using prompt templates
 - **Browser Extension** - Autofill and submit applications on major ATS platforms
 - **Email Integration** - Automatic tracking via Gmail integration
 - **Calendar Sync** - Interview scheduling with Google Calendar
@@ -81,6 +106,75 @@ This project consists of three main components:
 1. **Backend API** - Core business logic, AI integration, data management
 2. **Web Application** - Desktop interface for job and application management
 3. **Browser Extension** - Chrome/Edge extension for ATS integration
+
+## 🤖 AI Features
+
+### AI Resume Tailoring
+
+Automatically optimize your resume for specific job postings using AI:
+
+- **Smart Keyword Matching**: Extracts keywords from job descriptions and tailors resume content
+- **Executive Positioning**: Rewrites experience with executive-level impact statements
+- **Quantifiable Achievements**: Emphasizes metrics and measurable results
+- **ATS Optimization**: Ensures resume passes Applicant Tracking Systems
+- **Version Tracking**: Creates new resume versions with modification history
+
+**How it works:**
+1. Upload your master resume (PDF/DOCX)
+2. Save a job posting (URL or paste description)
+3. Click "Tailor Resume" - AI generates optimized version
+4. Review, edit, and download tailored resume
+
+**Technical Details:**
+- Uses Google Gemini (free tier) or OpenAI GPT-4
+- Customizable prompt templates per role type
+- Handles markdown-wrapped JSON responses
+- ~8-10 second generation time
+- $0.00 cost with Gemini free tier
+
+### AI Cover Letter Generation
+
+Generate personalized, executive-level cover letters for each application:
+
+- **Company-Specific**: Researched and personalized to company mission
+- **Role-Aligned**: Highlights relevant experience for specific position
+- **Persuasive Tone**: Professional, executive-level writing style
+- **Quantifiable Impact**: Includes metrics from your experience
+- **Multiple Versions**: Generate and compare different approaches
+
+**How it works:**
+1. Create an application (links job + tailored resume)
+2. Select tone (professional/enthusiastic/formal/creative)
+3. Click "Generate Cover Letter" - AI creates personalized letter
+4. Review multiple versions and activate preferred one
+
+**Technical Details:**
+- Integrates resume summary with job requirements
+- Configurable tone and style preferences
+- Version management with activation control
+- ~8-10 second generation time
+- $0.00 cost with Gemini free tier
+
+### AI Provider Configuration
+
+Supported providers:
+- **Google Gemini** (default, free tier available)
+  - Models: `gemini-2.5-flash` (free), `gemini-1.5-pro`, `gemini-1.5-flash`
+  - Best for: Cost-free usage, fast responses
+- **OpenAI** (requires API key)
+  - Models: `gpt-4`, `gpt-4-turbo`, `gpt-3.5-turbo`
+  - Best for: Maximum quality, advanced reasoning
+
+Configure in `.env`:
+```env
+# For Gemini (Free Tier)
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-2.5-flash
+
+# For OpenAI (Paid)
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_MODEL=gpt-4
+```
 
 ## 📚 Documentation
 
@@ -134,6 +228,7 @@ Create a `.env` file in `src/backend/`:
 ```env
 # Database
 DATABASE_URL=postgresql://user:password@localhost:5432/ai_job_assistant
+DATABASE_ASYNC_URL=postgresql+asyncpg://user:password@localhost:5432/ai_job_assistant
 
 # Security
 SECRET_KEY=your-secret-key-here
@@ -143,9 +238,27 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 # CORS
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 
-# AI (for future use)
-OPENAI_API_KEY=your-openai-api-key
+# AI Configuration - Google Gemini (Free Tier)
+GEMINI_API_KEY=your-gemini-api-key-here
+GEMINI_MODEL=gemini-2.5-flash  # Free tier model
+GEMINI_TEMPERATURE=0.7
+GEMINI_MAX_TOKENS=4000
+GEMINI_MAX_RETRIES=3
+
+# AI Configuration - OpenAI (Optional, Paid)
+# OPENAI_API_KEY=your-openai-api-key
+# OPENAI_MODEL=gpt-4
+# OPENAI_TEMPERATURE=0.7
+# OPENAI_MAX_TOKENS=4000
+
+# Rate Limiting
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_REQUESTS_PER_MINUTE=10
 ```
+
+**Getting AI API Keys:**
+- **Gemini (Free)**: Get key at [Google AI Studio](https://makersuite.google.com/app/apikey)
+- **OpenAI (Paid)**: Get key at [OpenAI Platform](https://platform.openai.com/api-keys)
 
 ### Running Locally
 

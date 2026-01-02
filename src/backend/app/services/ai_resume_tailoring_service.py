@@ -243,21 +243,36 @@ class AIResumeTailoringService:
 
     def _extract_json_from_response(self, content: str) -> dict[str, Any]:
         """Extract JSON from AI response that may be wrapped in markdown code blocks."""
-        # Try to find JSON in markdown code blocks
         import re
 
-        json_pattern = r"```(?:json)?\s*(\{.*?\})\s*```"
+        # Try to find JSON in markdown code blocks - use non-greedy match with proper JSON structure
+        # First, try to extract from ```json ... ``` blocks
+        json_pattern = r"```json\s*\n(.*?)\n```"
         match = re.search(json_pattern, content, re.DOTALL)
-
+        
         if match:
             try:
-                return json.loads(match.group(1))
-            except json.JSONDecodeError:
-                pass
+                json_str = match.group(1).strip()
+                return json.loads(json_str)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Failed to parse JSON from markdown block: {e}")
+
+        # Try generic code blocks
+        json_pattern = r"```\s*\n(.*?)\n```"
+        match = re.search(json_pattern, content, re.DOTALL)
+        
+        if match:
+            try:
+                json_str = match.group(1).strip()
+                # Check if it starts with { to be JSON
+                if json_str.startswith('{'):
+                    return json.loads(json_str)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Failed to parse JSON from generic code block: {e}")
 
         # If no markdown blocks, try direct parsing
         try:
-            return json.loads(content)
+            return json.loads(content.strip())
         except json.JSONDecodeError:
             # Return minimal structure
             logger.warning("Could not parse AI response, returning minimal structure")

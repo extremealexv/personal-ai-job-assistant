@@ -7,8 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.dependencies import get_current_user_id, get_db
+from app.api.deps import get_current_user, get_db
 from app.core.ai_exceptions import AIProviderError
+from app.models.user import User
 from app.schemas.cover_letter import CoverLetterResponse
 from app.services.ai_cover_letter_service import ai_cover_letter_service
 
@@ -36,7 +37,7 @@ class GenerateCoverLetterRequest(BaseModel):
 async def generate_cover_letter(
     request: GenerateCoverLetterRequest,
     db: AsyncSession = Depends(get_db),
-    user_id: UUID = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Generate an AI-powered cover letter for an application.
@@ -73,7 +74,7 @@ async def generate_cover_letter(
         cover_letter = await ai_cover_letter_service.generate_cover_letter(
             db=db,
             application_id=request.application_id,
-            user_id=user_id,
+            user_id=current_user.id,
             prompt_template_id=request.prompt_template_id,
         )
         return CoverLetterResponse.model_validate(cover_letter)

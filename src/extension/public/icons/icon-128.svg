@@ -1,0 +1,25 @@
+<!-- Simple SVG placeholder for extension icon -->
+<svg width="128" height="128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#grad)" />
+  
+  <!-- Document/form icon -->
+  <rect x="32" y="28" width="64" height="72" rx="4" fill="white" opacity="0.9" />
+  
+  <!-- Form lines -->
+  <line x1="40" y1="40" x2="80" y2="40" stroke="#667eea" stroke-width="3" stroke-linecap="round" />
+  <line x1="40" y1="52" x2="70" y2="52" stroke="#667eea" stroke-width="3" stroke-linecap="round" />
+  <line x1="40" y1="64" x2="75" y2="64" stroke="#667eea" stroke-width="3" stroke-linecap="round" />
+  <line x1="40" y1="76" x2="65" y2="76" stroke="#667eea" stroke-width="3" stroke-linecap="round" />
+  
+  <!-- AI/magic wand icon -->
+  <circle cx="85" cy="85" r="18" fill="#764ba2" />
+  <path d="M 85 70 L 88 80 L 98 83 L 88 86 L 85 96 L 82 86 L 72 83 L 82 80 Z" fill="white" />
+</svg>

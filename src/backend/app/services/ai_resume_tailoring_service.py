@@ -1,6 +1,7 @@
 """AI-powered resume tailoring service."""
 import json
 import logging
+from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
@@ -159,7 +160,7 @@ class AIResumeTailoringService:
             modifications=modifications,
             prompt_template_id=prompt_template.id,
             ai_model_used=ai_response.model,
-            generation_timestamp=ai_response.usage.total_tokens,  # Store tokens temporarily
+            generation_timestamp=datetime.now(),
         )
 
         db.add(resume_version)

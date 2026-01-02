@@ -1,8 +1,6 @@
 #!/bin/bash
 # Test AI Cover Letter Generation Endpoint
 
-set -e  # Exit on error
-
 # Colors for output
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -27,13 +25,23 @@ echo -e "${GREEN}✅ Using existing TOKEN${NC}"
 
 # Get resume ID
 RESUME_ID=$(curl -s 'http://localhost:8000/api/v1/resumes' \
-  -H "Authorization: Bearer $TOKEN" | jq -r '.items[0].id')
+  -H "Authorization: Bearer $TOKEN" | jq -r '.items[0].id // empty')
+
+if [ -z "$RESUME_ID" ] || [ "$RESUME_ID" = "null" ]; then
+    echo -e "${RED}❌ No resume found. Please create a master resume first.${NC}"
+    exit 1
+fi
 
 echo -e "${GREEN}✅ Resume ID: $RESUME_ID${NC}"
 
 # Get job ID
 JOB_ID=$(curl -s 'http://localhost:8000/api/v1/jobs?limit=1' \
-  -H "Authorization: Bearer $TOKEN" | jq -r '.items[0].id')
+  -H "Authorization: Bearer $TOKEN" | jq -r '.items[0].id // empty')
+
+if [ -z "$JOB_ID" ] || [ "$JOB_ID" = "null" ]; then
+    echo -e "${RED}❌ No job found. Please create a job posting first.${NC}"
+    exit 1
+fi
 
 echo -e "${GREEN}✅ Job ID: $JOB_ID${NC}"
 
@@ -45,26 +53,47 @@ if [ -z "$APPLICATION_ID" ] || [ "$APPLICATION_ID" = "null" ]; then
     echo -e "${BLUE}📝 Creating application...${NC}"
     
     # First, create a tailored resume version
-    RESUME_VERSION=$(curl -s -X POST 'http://localhost:8000/api/v1/ai/resume/tailor' \
+    echo "Creating tailored resume version..."
+    RESUME_VERSION_RESPONSE=$(curl -s -X POST 'http://localhost:8000/api/v1/ai/resume/tailor' \
       -H "Authorization: Bearer $TOKEN" \
       -H 'Content-Type: application/json' \
       -d "{
         \"master_resume_id\": \"$RESUME_ID\",
         \"job_posting_id\": \"$JOB_ID\",
         \"version_name\": \"AI Tailored for Cover Letter Test\"
-      }" | jq -r '.id')
+      }")
+    
+    RESUME_VERSION=$(echo "$RESUME_VERSION_RESPONSE" | jq -r '.id // empty')
+    
+    if [ -z "$RESUME_VERSION" ] || [ "$RESUME_VERSION" = "null" ]; then
+        echo -e "${RED}❌ Failed to create resume version${NC}"
+        echo "Response: $RESUME_VERSION_RESPONSE"
+        exit 1
+    fi
     
     echo -e "${GREEN}✅ Created resume version: $RESUME_VERSION${NC}"
     
+    # Wait for resume version to be committed
+    sleep 2
+    
     # Create application
-    APPLICATION_ID=$(curl -s -X POST 'http://localhost:8000/api/v1/applications' \
+    echo "Creating application..."
+    APPLICATION_RESPONSE=$(curl -s -X POST 'http://localhost:8000/api/v1/applications' \
       -H "Authorization: Bearer $TOKEN" \
       -H 'Content-Type: application/json' \
       -d "{
         \"job_posting_id\": \"$JOB_ID\",
         \"resume_version_id\": \"$RESUME_VERSION\",
         \"status\": \"draft\"
-      }" | jq -r '.id')
+      }")
+    
+    APPLICATION_ID=$(echo "$APPLICATION_RESPONSE" | jq -r '.id // empty')
+    
+    if [ -z "$APPLICATION_ID" ] || [ "$APPLICATION_ID" = "null" ]; then
+        echo -e "${RED}❌ Failed to create application${NC}"
+        echo "Response: $APPLICATION_RESPONSE"
+        exit 1
+    fi
     
     echo -e "${GREEN}✅ Created application: $APPLICATION_ID${NC}"
 else

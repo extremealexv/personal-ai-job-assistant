@@ -136,13 +136,22 @@ async function handleAutofillStart(tabId?: number) {
       };
     }
 
-    // Send resume data to content script
+    // Transform ResumeData to ApplicationData format
+    const applicationData = {
+      personalInfo: resumeResponse.data.personalInfo,
+      workExperience: resumeResponse.data.workExperiences || [],
+      workExperiences: resumeResponse.data.workExperiences || [],
+      education: resumeResponse.data.education || [],
+      skills: resumeResponse.data.skills || [],
+    };
+
+    // Send application data to content script
     await chrome.tabs.sendMessage(tabId, {
       type: 'autofill-data',
-      payload: resumeResponse.data,
+      payload: applicationData,
     });
 
-    logger.info('Sent resume data to content script');
+    logger.info('Sent application data to content script');
     
     return { success: true };
   } catch (error) {

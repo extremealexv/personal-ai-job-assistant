@@ -4,11 +4,13 @@
 
 // Personal Information
 export interface PersonalInfo {
-  firstName: string;
-  lastName: string;
+  fullName: string;
+  firstName?: string;
+  lastName?: string;
   middleName?: string;
   email: string;
   phone: string;
+  location?: string; // City, State or full address
   address?: {
     street?: string;
     city?: string;
@@ -38,8 +40,9 @@ export interface WorkExperience {
 export interface Education {
   id: string;
   institution: string;
-  degreeType: string; // e.g., "Bachelor's", "Master's"
-  fieldOfStudy: string;
+  degree?: string; // e.g., "Bachelor of Science"
+  degreeType?: string; // e.g., "Bachelor's", "Master's"
+  fieldOfStudy?: string;
   startDate?: string;
   endDate?: string;
   gpa?: number;
@@ -66,10 +69,12 @@ export interface DemographicAnswers {
 // Application Data - Complete data structure for autofill
 export interface ApplicationData {
   personalInfo: PersonalInfo;
-  workExperiences: WorkExperience[];
+  workExperience: WorkExperience[]; // Singular for consistency with strategies
+  workExperiences?: WorkExperience[]; // Plural for backwards compatibility
   education: Education[];
   skills?: Skill[];
   resumeFile?: File;
+  coverLetter?: string; // Cover letter text content
   coverLetterFile?: File;
   demographics?: DemographicAnswers;
 }
@@ -77,11 +82,14 @@ export interface ApplicationData {
 // Autofill Result
 export interface AutofillResult {
   success: boolean;
-  fieldsCompleted: number;
-  totalFields: number;
-  fieldsFailed: string[];
+  platform?: string; // ATS platform name
+  fieldsFilledCount?: number; // Number of fields filled
+  fieldsCompleted?: number; // Backwards compatibility
+  totalFields?: number;
+  fieldsFailed?: string[];
+  message?: string; // Error or success message
   errors?: string[];
-  duration: number; // milliseconds
+  duration?: number; // milliseconds
 }
 
 // Autofill Progress (for real-time updates)
@@ -104,12 +112,10 @@ export type ATSPlatform = 'workday' | 'greenhouse' | 'lever' | 'taleo' | 'unknow
 
 // ATS Strategy Interface
 export interface ATSStrategy {
-  readonly name: ATSPlatform;
   detect(): boolean;
-  getApplicationUrl(): string | null;
   autofill(data: ApplicationData): Promise<AutofillResult>;
+  getPlatformName(): string;
   submit?(): Promise<SubmitResult>;
-  getProgress(): AutofillProgress;
 }
 
 // Extension Settings

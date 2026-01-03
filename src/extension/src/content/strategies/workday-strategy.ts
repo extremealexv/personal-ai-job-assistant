@@ -17,8 +17,12 @@ export class WorkdayStrategy extends BaseATSStrategy {
    * Detect if current page is Workday
    */
   detect(): boolean {
-    // Check URL
-    if (window.location.hostname.includes('myworkdayjobs.com')) {
+    // Check URL for any Workday domain
+    const hostname = window.location.hostname.toLowerCase();
+    if (hostname.includes('myworkdayjobs.com') || 
+        hostname.includes('myworkdaysite.com') ||
+        hostname.includes('workday.com')) {
+      logger.info('Workday detected via URL:', hostname);
       return true;
     }
 
@@ -28,9 +32,14 @@ export class WorkdayStrategy extends BaseATSStrategy {
       '[data-automation-id="formField-email"]',
       '.css-k008qs', // Workday form container class (may vary)
       '[data-uxi-widget-type="formField"]',
+      '[data-automation-id*="formField"]', // Any Workday form field
     ];
 
-    return workdayElements.some((selector) => document.querySelector(selector) !== null);
+    const detected = workdayElements.some((selector) => document.querySelector(selector) !== null);
+    if (detected) {
+      logger.info('Workday detected via DOM elements');
+    }
+    return detected;
   }
 
   /**

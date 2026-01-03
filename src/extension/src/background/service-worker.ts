@@ -48,7 +48,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
       return true;
 
     case 'autofill-start':
-      handleAutofillStart(sender.tab?.id).then(sendResponse);
+      handleAutofillStart(message.payload?.tabId || sender.tab?.id).then(sendResponse);
       return true;
 
     case 'log-activity':

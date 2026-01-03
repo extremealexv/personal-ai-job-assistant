@@ -158,6 +158,7 @@ async function handleAutofill() {
     // Send message to background script to start autofill
     const response = await chrome.runtime.sendMessage({
       type: 'autofill-start',
+      payload: { tabId: tab.id },
     });
 
     logger.info('Received response from background:', response);

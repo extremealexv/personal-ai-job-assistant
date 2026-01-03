@@ -97,6 +97,7 @@ class APIClient {
       return {
         success: true,
         data: {
+          id: 'resume-test-001',
           personalInfo: {
             fullName: 'John Doe',
             firstName: 'John',
@@ -104,13 +105,14 @@ class APIClient {
             email: 'john.doe@example.com',
             phone: '(555) 123-4567',
             location: 'San Francisco, CA',
-            linkedin: 'https://linkedin.com/in/johndoe',
-            github: 'https://github.com/johndoe',
-            portfolio: 'https://johndoe.com',
+            linkedinUrl: 'https://linkedin.com/in/johndoe',
+            githubUrl: 'https://github.com/johndoe',
+            portfolioUrl: 'https://johndoe.com',
           },
-          workExperience: [
+          workExperiences: [
             {
-              company: 'Tech Corp',
+              id: 'work-1',
+              companyName: 'Tech Corp',
               jobTitle: 'Senior Software Engineer',
               location: 'San Francisco, CA',
               startDate: '2020-01-15',
@@ -124,7 +126,8 @@ class APIClient {
               ],
             },
             {
-              company: 'StartupXYZ',
+              id: 'work-2',
+              companyName: 'StartupXYZ',
               jobTitle: 'Full Stack Developer',
               location: 'Remote',
               startDate: '2018-06-01',
@@ -139,6 +142,7 @@ class APIClient {
           ],
           education: [
             {
+              id: 'edu-1',
               institution: 'Stanford University',
               degree: 'Bachelor of Science',
               fieldOfStudy: 'Computer Science',
@@ -149,14 +153,14 @@ class APIClient {
             },
           ],
           skills: [
-            'JavaScript',
-            'TypeScript',
-            'Python',
-            'React',
-            'Node.js',
-            'AWS',
-            'Docker',
-            'Kubernetes',
+            { id: 'skill-1', name: 'JavaScript', category: 'Programming Language' },
+            { id: 'skill-2', name: 'TypeScript', category: 'Programming Language' },
+            { id: 'skill-3', name: 'Python', category: 'Programming Language' },
+            { id: 'skill-4', name: 'React', category: 'Framework' },
+            { id: 'skill-5', name: 'Node.js', category: 'Framework' },
+            { id: 'skill-6', name: 'AWS', category: 'Cloud Platform' },
+            { id: 'skill-7', name: 'Docker', category: 'Tool' },
+            { id: 'skill-8', name: 'Kubernetes', category: 'Tool' },
           ],
         },
       };
@@ -189,6 +193,7 @@ class APIClient {
       return {
         success: true,
         data: {
+          apiBaseUrl: 'http://localhost:8000',
           autoSubmit: false,
           enabledPlatforms: {
             workday: true,

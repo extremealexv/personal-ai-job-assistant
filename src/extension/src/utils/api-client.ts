@@ -116,7 +116,7 @@ class APIClient {
               jobTitle: 'Senior Software Engineer',
               location: 'San Francisco, CA',
               startDate: '2020-01-15',
-              endDate: null,
+              endDate: undefined,
               isCurrent: true,
               description: 'Led development of microservices architecture serving 10M+ users',
               achievements: [

@@ -167,6 +167,7 @@ export interface ActivityLogEntry {
 // Message Types for communication between components
 export type MessageType = 
   | 'autofill-start'
+  | 'autofill-data'
   | 'autofill-progress'
   | 'autofill-complete'
   | 'submit-start'

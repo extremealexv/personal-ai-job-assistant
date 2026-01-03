@@ -7,6 +7,7 @@ import type { ApiResponse, ResumeData, ApplicationTemplate, ExtensionSettings } 
 class APIClient {
   private baseUrl: string;
   private authToken: string | null = null;
+  private testMode: boolean = true; // TEST MODE
 
   constructor(baseUrl: string = 'http://localhost:8000') {
     this.baseUrl = baseUrl;
@@ -91,6 +92,76 @@ class APIClient {
    * Fetch user's resume data for autofill
    */
   async getResumeData(resumeVersionId?: string): Promise<ApiResponse<ResumeData>> {
+    // TEST MODE: Return mock data
+    if (this.testMode) {
+      return {
+        success: true,
+        data: {
+          personalInfo: {
+            fullName: 'John Doe',
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'john.doe@example.com',
+            phone: '(555) 123-4567',
+            location: 'San Francisco, CA',
+            linkedin: 'https://linkedin.com/in/johndoe',
+            github: 'https://github.com/johndoe',
+            portfolio: 'https://johndoe.com',
+          },
+          workExperience: [
+            {
+              company: 'Tech Corp',
+              jobTitle: 'Senior Software Engineer',
+              location: 'San Francisco, CA',
+              startDate: '2020-01-15',
+              endDate: null,
+              isCurrent: true,
+              description: 'Led development of microservices architecture serving 10M+ users',
+              achievements: [
+                'Reduced API response time by 40%',
+                'Mentored team of 5 engineers',
+                'Implemented CI/CD pipeline',
+              ],
+            },
+            {
+              company: 'StartupXYZ',
+              jobTitle: 'Full Stack Developer',
+              location: 'Remote',
+              startDate: '2018-06-01',
+              endDate: '2019-12-31',
+              isCurrent: false,
+              description: 'Built customer-facing web applications using React and Node.js',
+              achievements: [
+                'Launched 3 major features',
+                'Improved code coverage to 85%',
+              ],
+            },
+          ],
+          education: [
+            {
+              institution: 'Stanford University',
+              degree: 'Bachelor of Science',
+              fieldOfStudy: 'Computer Science',
+              location: 'Stanford, CA',
+              startDate: '2014-09-01',
+              endDate: '2018-06-15',
+              gpa: 3.8,
+            },
+          ],
+          skills: [
+            'JavaScript',
+            'TypeScript',
+            'Python',
+            'React',
+            'Node.js',
+            'AWS',
+            'Docker',
+            'Kubernetes',
+          ],
+        },
+      };
+    }
+
     const endpoint = resumeVersionId
       ? `/api/v1/extension/resume-data?version_id=${resumeVersionId}`
       : '/api/v1/extension/resume-data';
@@ -113,6 +184,22 @@ class APIClient {
    * Get user settings
    */
   async getSettings(): Promise<ApiResponse<ExtensionSettings>> {
+    // TEST MODE: Return mock settings
+    if (this.testMode) {
+      return {
+        success: true,
+        data: {
+          autoSubmit: false,
+          enabledPlatforms: {
+            workday: true,
+            greenhouse: true,
+            lever: true,
+            taleo: true,
+          },
+        },
+      };
+    }
+
     return this.request<ExtensionSettings>('/api/v1/extension/settings', {
       method: 'GET',
     });

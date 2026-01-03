@@ -31,6 +31,21 @@ const enableTaleoCheck = document.getElementById('enableTaleo') as HTMLInputElem
 async function init() {
   logger.info('Popup initialized');
 
+  // TEST MODE: Skip authentication and use mock data
+  const TEST_MODE = true;
+
+  if (TEST_MODE) {
+    logger.info('Running in TEST MODE - bypassing authentication');
+    await storage.setAuthToken('test-token-12345');
+    apiClient.setAuthToken('test-token-12345');
+    showMainSection();
+    await loadSettings();
+    await loadActivityLog();
+    await detectPlatform();
+    setupEventListeners();
+    return;
+  }
+
   // Check authentication status
   const authToken = await storage.getAuthToken();
 

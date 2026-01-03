@@ -109,12 +109,16 @@ async function handleUpdateSettings(updates: any) {
  */
 async function handleAutofillStart(tabId?: number) {
   try {
+    logger.info('handleAutofillStart called with tabId:', tabId);
+
     if (!tabId) {
       throw new Error('No tab ID provided');
     }
 
     // Get auth token
     const authToken = await storage.getAuthToken();
+    logger.info('Auth token retrieved:', authToken ? 'yes' : 'no');
+    
     if (!authToken) {
       return {
         success: false,
@@ -126,8 +130,11 @@ async function handleAutofillStart(tabId?: number) {
     apiClient.setAuthToken(authToken);
 
     // Get resume data
+    logger.info('Fetching resume data...');
     const settings = await storage.getSettings();
     const resumeResponse = await apiClient.getResumeData(settings.defaultResumeVersionId);
+    
+    logger.info('Resume response:', resumeResponse.success);
     
     if (!resumeResponse.success || !resumeResponse.data) {
       return {
@@ -145,12 +152,15 @@ async function handleAutofillStart(tabId?: number) {
       skills: resumeResponse.data.skills || [],
     };
 
+    logger.info('Sending autofill-data message to tab:', tabId);
+
     // Send application data to content script
-    await chrome.tabs.sendMessage(tabId, {
+    const messageResponse = await chrome.tabs.sendMessage(tabId, {
       type: 'autofill-data',
       payload: applicationData,
     });
 
+    logger.info('Content script response:', messageResponse);
     logger.info('Sent application data to content script');
     
     return { success: true };

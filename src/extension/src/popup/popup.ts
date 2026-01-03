@@ -144,6 +144,8 @@ async function handleAutofill() {
     autofillBtn.disabled = true;
     autofillBtn.textContent = 'Filling...';
 
+    logger.info('Autofill button clicked');
+
     // Get current tab
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     
@@ -151,24 +153,32 @@ async function handleAutofill() {
       throw new Error('No active tab found');
     }
 
+    logger.info('Sending autofill-start message to background script');
+
     // Send message to background script to start autofill
     const response = await chrome.runtime.sendMessage({
       type: 'autofill-start',
     });
 
+    logger.info('Received response from background:', response);
+
     if (response.success) {
       logger.info('Autofill started successfully');
+      autofillBtn.textContent = '✅ Filled!';
       setTimeout(() => {
         autofillBtn.textContent = '✨ Fill Application';
         autofillBtn.disabled = false;
-      }, 2000);
+      }, 3000);
     } else {
       throw new Error(response.error || 'Autofill failed');
     }
   } catch (error) {
     logger.error('Autofill error:', error);
-    autofillBtn.textContent = '✨ Fill Application';
-    autofillBtn.disabled = false;
+    autofillBtn.textContent = '❌ Error';
+    setTimeout(() => {
+      autofillBtn.textContent = '✨ Fill Application';
+      autofillBtn.disabled = false;
+    }, 3000);
     alert(error instanceof Error ? error.message : 'Autofill failed');
   }
 }

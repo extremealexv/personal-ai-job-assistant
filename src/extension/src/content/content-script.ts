@@ -4,9 +4,23 @@
  */
 
 import { logger } from '../utils/logger';
-import type { ATSPlatform, ApplicationData, ExtensionMessage } from '../types';
+import type { ATSPlatform, ApplicationData, ExtensionMessage, ATSStrategy } from '../types';
+
+// Import ATS strategies
+import { WorkdayStrategy } from './strategies/workday-strategy';
+import { GreenhouseStrategy } from './strategies/greenhouse-strategy';
+import { LeverStrategy } from './strategies/lever-strategy';
+import { TaleoStrategy } from './strategies/taleo-strategy';
 
 logger.info('Content script initialized on:', window.location.hostname);
+
+// Initialize strategies
+const strategies = new Map<ATSPlatform, ATSStrategy>([
+  ['workday', new WorkdayStrategy()],
+  ['greenhouse', new GreenhouseStrategy()],
+  ['lever', new LeverStrategy()],
+  ['taleo', new TaleoStrategy()],
+]);
 
 // Detect ATS platform
 const detectedPlatform = detectATSPlatform();
@@ -16,10 +30,18 @@ logger.info('Detected platform:', detectedPlatform);
  * Detect which ATS platform we're on
  */
 function detectATSPlatform(): ATSPlatform {
-  const hostname = window.location.hostname.toLowerCase();
-  const url = window.location.href.toLowerCase();
+  // Try each strategy's detect method
+  for (const [platform, strategy] of strategies.entries()) {
+    if (strategy.detect()) {
+      logger.info(`Platform detected by ${platform} strategy`);
+      return platform;
+    }
+  }
 
-  if (hostname.includes('myworkdayjobs.com') || url.includes('workday')) {
+  // Fallback to URL-based detection
+  const hostname = window.location.hostname.toLowerCase();
+
+  if (hostname.includes('myworkdayjobs.com')) {
     return 'workday';
   } else if (hostname.includes('greenhouse.io')) {
     return 'greenhouse';
@@ -27,9 +49,9 @@ function detectATSPlatform(): ATSPlatform {
     return 'lever';
   } else if (hostname.includes('taleo.net')) {
     return 'taleo';
-  } else {
-    return 'unknown';
   }
+
+  return 'unknown';
 }
 
 /**
@@ -60,29 +82,44 @@ async function handleAutofillData(data: ApplicationData) {
   try {
     logger.info('Starting autofill with data:', data);
 
-    // TODO: Import and use appropriate ATS strategy
-    // For now, just show a notification
-    showNotification('Autofill started', `Detected platform: ${detectedPlatform}`);
+    if (detectedPlatform === 'unknown') {
+      throw new Error('Unknown ATS platform - cannot autofill');
+    }
 
-    // Simulate autofill for now
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Get the appropriate strategy
+    const strategy = strategies.get(detectedPlatform);
+    if (!strategy) {
+      throw new Error(`No strategy found for platform: ${detectedPlatform}`);
+    }
 
-    showNotification('Autofill complete', 'Form has been filled successfully');
+    showNotification('Autofill started', `Filling ${detectedPlatform} form...`);
 
-    // Log activity
-    await chrome.runtime.sendMessage({
-      type: 'log-activity',
-      payload: {
-        platform: detectedPlatform,
-        url: window.location.href,
-        action: 'autofill',
-        result: 'success',
-        fieldsCompleted: 10,
-        totalFields: 10,
-      },
-    });
+    // Execute autofill using the strategy
+    const result = await strategy.autofill(data);
 
-    return { success: true };
+    if (result.success) {
+      showNotification(
+        'Autofill complete',
+        `Filled ${result.fieldsFilledCount} fields successfully`
+      );
+
+      // Log success
+      await chrome.runtime.sendMessage({
+        type: 'log-activity',
+        payload: {
+          platform: detectedPlatform,
+          url: window.location.href,
+          action: 'autofill',
+          result: 'success',
+          fieldsCompleted: result.fieldsFilledCount,
+          duration: result.duration,
+        },
+      });
+
+      return { success: true, result };
+    } else {
+      throw new Error(result.message || 'Autofill failed');
+    }
   } catch (error) {
     logger.error('Error during autofill:', error);
     

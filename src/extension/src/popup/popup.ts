@@ -33,7 +33,6 @@ async function init() {
 
   // Check authentication status
   const authToken = await storage.getAuthToken();
-  const settings = await storage.getSettings();
 
   if (authToken) {
     apiClient.setAuthToken(authToken);

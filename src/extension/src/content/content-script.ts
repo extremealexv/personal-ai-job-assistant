@@ -35,7 +35,7 @@ function detectATSPlatform(): ATSPlatform {
 /**
  * Listen for messages from background script
  */
-chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendResponse) => {
   logger.debug('Content script received message:', message.type);
 
   switch (message.type) {
@@ -45,10 +45,11 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
 
     case 'detect-platform':
       sendResponse({ platform: detectedPlatform });
-      break;
+      return false;
 
     default:
       logger.warn('Unknown message type:', message.type);
+      return false;
   }
 });
 

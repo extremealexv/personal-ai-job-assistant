@@ -2,7 +2,7 @@
  * API Client for communicating with the backend
  */
 
-import type { ApiResponse, ApplicationData, ResumeData, ApplicationTemplate, ExtensionSettings } from '../types';
+import type { ApiResponse, ResumeData, ApplicationTemplate, ExtensionSettings } from '../types';
 
 class APIClient {
   private baseUrl: string;
@@ -35,9 +35,9 @@ class APIClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
     
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...(options.headers || {}),
+      ...(options.headers as Record<string, string> || {}),
     };
 
     if (this.authToken) {

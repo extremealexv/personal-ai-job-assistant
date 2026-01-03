@@ -58,6 +58,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     default:
       logger.warn('Unknown message type:', message.type);
       sendResponse({ success: false, error: 'Unknown message type' });
+      return false;
   }
 });
 

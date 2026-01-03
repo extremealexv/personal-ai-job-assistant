@@ -10,6 +10,7 @@
   ],
   "host_permissions": [
     "*://*.myworkdayjobs.com/*",
+    "*://*.myworkdaysite.com/*",
     "*://boards.greenhouse.io/*",
     "*://*.greenhouse.io/*",
     "*://jobs.lever.co/*",
@@ -23,6 +24,7 @@
     {
       "matches": [
         "*://*.myworkdayjobs.com/*",
+        "*://*.myworkdaysite.com/*",
         "*://boards.greenhouse.io/*",
         "*://*.greenhouse.io/*",
         "*://jobs.lever.co/*",

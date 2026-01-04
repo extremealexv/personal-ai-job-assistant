@@ -60,10 +60,27 @@ export class WorkdayStrategy extends BaseATSStrategy {
     try {
       logger.info('Starting Workday autofill...');
 
-      // Wait for form to load
-      const form = await this.waitForElement('[data-automation-id="formField-name"]', 10000);
-      if (!form) {
-        return this.createErrorResult('Workday form not found');
+      // Wait for any Workday form field to appear (flexible detection)
+      const formSelectors = [
+        '[data-automation-id*="formField"]',
+        'input[name*="firstName"]',
+        'input[name*="lastName"]',
+        '.css-k008qs',
+        '[data-uxi-widget-type="formField"]',
+      ];
+      
+      let formFound = false;
+      for (const selector of formSelectors) {
+        const element = await this.waitForElement(selector, 2000);
+        if (element) {
+          logger.info('Workday form detected with selector:', selector);
+          formFound = true;
+          break;
+        }
+      }
+      
+      if (!formFound) {
+        return this.createErrorResult('Workday form not found - no form fields detected');
       }
 
       // Section 1: Personal Information

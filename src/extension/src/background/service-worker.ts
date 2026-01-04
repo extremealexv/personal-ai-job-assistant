@@ -3,64 +3,99 @@
  * Handles extension lifecycle, message passing, and API coordination
  */
 
+console.log('=== SERVICE WORKER STARTING ===');
+
 import { storage } from '../utils/storage';
 import { apiClient } from '../utils/api-client';
 import { logger } from '../utils/logger';
 import type { ExtensionMessage } from '../types';
 
-logger.info('Background service worker initialized');
+console.log('=== IMPORTS SUCCESSFUL ===');
+
+try {
+  logger.info('Background service worker initialized');
+  console.log('=== LOGGER WORKS ===');
+} catch (error) {
+  console.error('Logger init failed:', error);
+}
 
 // Initialize extension on install
 chrome.runtime.onInstalled.addListener(async (details) => {
-  if (details.reason === 'install') {
-    logger.info('Extension installed');
+  try {
+    console.log('=== ON INSTALLED TRIGGERED ===', details.reason);
     
-    // Set default settings
-    await storage.updateSettings({
-      apiBaseUrl: 'http://localhost:8000',
-      enabledPlatforms: {
-        workday: true,
-        greenhouse: true,
-        lever: true,
-        taleo: true,
-      },
-      autoSubmit: false,
-    });
+    if (details.reason === 'install') {
+      logger.info('Extension installed');
+      
+      // Set default settings
+      await storage.updateSettings({
+        apiBaseUrl: 'http://localhost:8000',
+        enabledPlatforms: {
+          workday: true,
+          greenhouse: true,
+          lever: true,
+          taleo: true,
+        },
+        autoSubmit: false,
+      });
+      
+      // Open welcome page
+      chrome.tabs.create({ url: 'popup.html' });
+    } else if (details.reason === 'update') {
+      logger.info('Extension updated');
+    }
     
-    // Open welcome page
-    chrome.tabs.create({ url: 'popup.html' });
-  } else if (details.reason === 'update') {
-    logger.info('Extension updated');
+    console.log('=== ON INSTALLED COMPLETE ===');
+  } catch (error) {
+    console.error('=== ON INSTALLED ERROR ===', error);
   }
 });
 
 // Handle messages from content scripts and popup
 chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendResponse) => {
-  console.log('=== BACKGROUND RECEIVED MESSAGE ===', message.type, message);
-  logger.debug('Received message:', message.type);
+  try {
+    console.log('=== BACKGROUND RECEIVED MESSAGE ===', message.type, message);
+    logger.debug('Received message:', message.type);
 
-  switch (message.type) {
-    case 'get-settings':
-      handleGetSettings().then(sendResponse);
-      return true; // Keep channel open for async response
+    switch (message.type) {
+      case 'get-settings':
+        handleGetSettings().then(sendResponse).catch((err) => {
+          console.error('get-settings error:', err);
+          sendResponse({ success: false, error: String(err) });
+        });
+        return true; // Keep channel open for async response
 
-    case 'update-settings':
-      handleUpdateSettings(message.payload).then(sendResponse);
-      return true;
+      case 'update-settings':
+        handleUpdateSettings(message.payload).then(sendResponse).catch((err) => {
+          console.error('update-settings error:', err);
+          sendResponse({ success: false, error: String(err) });
+        });
+        return true;
 
-    case 'autofill-start':
-      console.log('=== HANDLING AUTOFILL START ===', message.payload);
-      handleAutofillStart(message.payload?.tabId || sender.tab?.id).then(sendResponse);
-      return true;
+      case 'autofill-start':
+        console.log('=== HANDLING AUTOFILL START ===', message.payload);
+        handleAutofillStart(message.payload?.tabId || sender.tab?.id).then(sendResponse).catch((err) => {
+          console.error('autofill-start error:', err);
+          sendResponse({ success: false, error: String(err) });
+        });
+        return true;
 
-    case 'log-activity':
-      handleLogActivity(message.payload).then(sendResponse);
-      return true;
+      case 'log-activity':
+        handleLogActivity(message.payload).then(sendResponse).catch((err) => {
+          console.error('log-activity error:', err);
+          sendResponse({ success: false, error: String(err) });
+        });
+        return true;
 
-    default:
-      logger.warn('Unknown message type:', message.type);
-      sendResponse({ success: false, error: 'Unknown message type' });
-      return false;
+      default:
+        logger.warn('Unknown message type:', message.type);
+        sendResponse({ success: false, error: 'Unknown message type' });
+        return false;
+    }
+  } catch (error) {
+    console.error('=== MESSAGE HANDLER ERROR ===', error);
+    sendResponse({ success: false, error: String(error) });
+    return false;
   }
 });
 

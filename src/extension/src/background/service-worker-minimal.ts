@@ -8,7 +8,7 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log('=== EXTENSION INSTALLED ===');
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   console.log('=== MESSAGE RECEIVED ===', message);
   sendResponse({ success: true, message: 'Service worker is alive!' });
   return true;

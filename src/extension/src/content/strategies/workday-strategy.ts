@@ -126,28 +126,31 @@ export class WorkdayStrategy extends BaseATSStrategy {
     let count = 0;
     const { personalInfo } = this.data!;
 
-    // Full name (may be split into first/last or combined)
-    if (this.fillTextField('[data-automation-id="formField-name"]', personalInfo.fullName)) {
-      count++;
-    }
-
-    // First name
-    if (this.fillTextField('[data-automation-id="formField-firstName"]', personalInfo.firstName || '')) {
-      count++;
-    }
-
-    // Last name
-    if (this.fillTextField('[data-automation-id="formField-lastName"]', personalInfo.lastName || '')) {
-      count++;
-    }
-
-    // Location/City
-    if (personalInfo.location) {
-      if (this.fillTextField('[data-automation-id="formField-location"]', personalInfo.location)) {
+    // Try multiple selector patterns for first name
+    const firstNameSelectors = [
+      'input[name*="firstName"]',
+      'input[id*="firstName"]',
+      'input[name="legalName--firstName"]',
+      '[data-automation-id="formField-firstName"]',
+    ];
+    for (const selector of firstNameSelectors) {
+      if (this.fillTextField(selector, personalInfo.firstName || personalInfo.fullName.split(' ')[0])) {
         count++;
+        break;
       }
-      if (this.fillTextField('[data-automation-id="formField-city"]', personalInfo.location)) {
+    }
+
+    // Try multiple selector patterns for last name
+    const lastNameSelectors = [
+      'input[name*="lastName"]',
+      'input[id*="lastName"]',
+      'input[name="legalName--lastName"]',
+      '[data-automation-id="formField-lastName"]',
+    ];
+    for (const selector of lastNameSelectors) {
+      if (this.fillTextField(selector, personalInfo.lastName || personalInfo.fullName.split(' ').slice(1).join(' '))) {
         count++;
+        break;
       }
     }
 
@@ -161,21 +164,33 @@ export class WorkdayStrategy extends BaseATSStrategy {
     let count = 0;
     const { personalInfo } = this.data!;
 
-    // Email
-    if (this.fillTextField('[data-automation-id="formField-email"]', personalInfo.email)) {
-      count++;
-    }
-    if (this.fillTextField('[data-automation-id="emailAddress"]', personalInfo.email)) {
-      count++;
+    // Try multiple selector patterns for email
+    const emailSelectors = [
+      'input[type="email"]',
+      'input[name*="email"]',
+      'input[id*="email"]',
+      '[data-automation-id="formField-email"]',
+    ];
+    for (const selector of emailSelectors) {
+      if (this.fillTextField(selector, personalInfo.email)) {
+        count++;
+        break;
+      }
     }
 
-    // Phone
+    // Try multiple selector patterns for phone
     if (personalInfo.phone) {
-      if (this.fillTextField('[data-automation-id="formField-phone"]', personalInfo.phone)) {
-        count++;
-      }
-      if (this.fillTextField('[data-automation-id="phoneNumber"]', personalInfo.phone)) {
-        count++;
+      const phoneSelectors = [
+        'input[type="tel"]',
+        'input[name*="phone"]',
+        'input[id*="phone"]',
+        '[data-automation-id="formField-phone"]',
+      ];
+      for (const selector of phoneSelectors) {
+        if (this.fillTextField(selector, personalInfo.phone)) {
+          count++;
+          break;
+        }
       }
     }
 

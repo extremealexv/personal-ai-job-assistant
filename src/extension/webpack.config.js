@@ -5,7 +5,7 @@ module.exports = {
   mode: process.env.NODE_ENV || 'development',
   devtool: 'inline-source-map',
   entry: {
-    background: './src/background/service-worker.ts',
+    background: './src/background/service-worker-minimal.ts',
     content: './src/content/content-script.ts',
     popup: './src/popup/popup.ts',
   },

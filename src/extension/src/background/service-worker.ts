@@ -191,13 +191,36 @@ async function handleAutofillStart(tabId?: number) {
 
     logger.info('Sending autofill-data message to tab:', tabId);
 
-    // Send application data to content script
-    const messageResponse = await chrome.tabs.sendMessage(tabId, {
-      type: 'autofill-data',
-      payload: applicationData,
-    });
+    // Send application data to content script with retry logic
+    let messageResponse;
+    let retries = 3;
+    let lastError;
+    
+    while (retries > 0) {
+      try {
+        messageResponse = await chrome.tabs.sendMessage(tabId, {
+          type: 'autofill-data',
+          payload: applicationData,
+        });
+        logger.info('Content script response:', messageResponse);
+        break; // Success, exit retry loop
+      } catch (error) {
+        lastError = error;
+        retries--;
+        
+        if (retries > 0) {
+          logger.warn(`Failed to send message, retrying... (${retries} attempts left)`);
+          await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retry
+        } else {
+          logger.error('All retry attempts failed');
+          return {
+            success: false,
+            error: 'Content script not responding. Please refresh the page and try again.',
+          };
+        }
+      }
+    }
 
-    logger.info('Content script response:', messageResponse);
     logger.info('Sent application data to content script');
     
     return { success: true };

@@ -36,6 +36,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
 // Handle messages from content scripts and popup
 chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendResponse) => {
+  console.log('=== BACKGROUND RECEIVED MESSAGE ===', message.type, message);
   logger.debug('Received message:', message.type);
 
   switch (message.type) {
@@ -48,6 +49,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
       return true;
 
     case 'autofill-start':
+      console.log('=== HANDLING AUTOFILL START ===', message.payload);
       handleAutofillStart(message.payload?.tabId || sender.tab?.id).then(sendResponse);
       return true;
 

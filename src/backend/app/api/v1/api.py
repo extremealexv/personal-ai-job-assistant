@@ -14,6 +14,7 @@ from app.api.v1.endpoints import (
     prompt_templates,
     resumes,
     search,
+    credentials,
 )
 
 # Create main v1 router
@@ -31,6 +32,7 @@ api_router.include_router(search.router, prefix="/search", tags=["Search"])
 api_router.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
 api_router.include_router(ai_resume.router, prefix="/ai/resume", tags=["AI Resume Tailoring"])
 api_router.include_router(ai_cover_letter.router, prefix="/ai/cover-letter", tags=["AI Cover Letter"])
+api_router.include_router(credentials.router, prefix="/credentials", tags=["Credentials"])
 
 # TODO: Add more routers as they are implemented
 # api_router.include_router(users.router, prefix="/users", tags=["Users"])

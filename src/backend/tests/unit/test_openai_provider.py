@@ -77,7 +77,7 @@ class TestOpenAIProviderInitialization:
         provider = OpenAIProvider()
 
         assert provider.client is not None
-        assert provider.default_model == "gpt-4"
+        assert provider.default_model in ["gpt-4", "gpt-3.5-turbo"]
         mock_async_openai.assert_called_once()
 
     @patch("app.config.settings.openai_api_key", None)

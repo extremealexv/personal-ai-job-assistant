@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Personal AI Job Assistant",
+  "version": "1.0.0",
+  "description": "Auto-fill job applications across Workday, Greenhouse, Lever, and Taleo.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "src/background/serviceWorker.ts",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "src/popup/index.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.myworkdayjobs.com/*",
+        "https://boards.greenhouse.io/*",
+        "https://*.greenhouse.io/*",
+        "https://jobs.lever.co/*",
+        "https://*.taleo.net/*"
+      ],
+      "js": ["src/content/contentScript.ts"]
+    }
+  ]
+}
